@@ -1,11 +1,14 @@
 package de.prob2.ui.visb;
 
+import java.awt.Desktop;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +17,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import javax.imageio.ImageIO;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +55,6 @@ import de.prob2.ui.menu.ExternalEditor;
 import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.visb.help.UserManualStage;
-
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -82,10 +87,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
 
@@ -511,6 +512,8 @@ public final class VisBView extends BorderPane {
 		LOGGER.debug("Loading generated VisB HTML code into WebView...");
 		this.webView.getEngine().loadContent(htmlFile);
 
+		openVisB3DBrowser();
+
 		this.runWhenHtmlLoaded(() -> {
 			JSObject window = this.getJSWindow();
 
@@ -747,6 +750,35 @@ public final class VisBView extends BorderPane {
 		LOGGER.error("Error while (re)loading VisB file", exc);
 		loadingStatus.set(VisBView.LoadingStatus.NONE_LOADED);
 		alert(exc, "visb.exception.visb.file.error.header", "visb.exception.visb.file.error");
+	}
+
+	
+	private void openVisB3DBrowser() {
+		createVis3DServer();
+
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+			try {
+				Desktop.getDesktop().browse(new URI("http://localhost:8080/")); // TODO: Change Port
+			} catch (IOException | URISyntaxException e) {
+				// This should never happen.
+				e.printStackTrace();
+			}
+		}
+	}
+
+	// Creates a local server on port 8080
+	private void createVis3DServer()	{
+        ProcessBuilder pb = new ProcessBuilder(
+            "jwebserver",
+            "-p", "8080",
+            "-d", "E:/User/Arbeiten/Studium/Master/Projektarbeit/prob2_ui/src/main/resources/de/prob2/ui/visb/visb3d" // TODO: Exchange actual Server
+        );
+        try {
+			pb.start();
+		} catch (IOException e) {
+			LOGGER.error("VisB3d server could not be started.");
+			alert(e, "visb.exception.header","visb.controller.alert.visualisation.file");
+		}
 	}
 
 	@FXML

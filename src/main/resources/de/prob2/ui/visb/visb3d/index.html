@@ -6,19 +6,19 @@
     <title>Unity WebGL Player | VisB-3D</title>
   </head>
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
-	<button onclick="sendToUnity()">Move</button>
+	<!-- <button onclick="sendToUnity()">Move</button> -->
     <canvas id="unity-canvas" width=960 height=600 tabindex="-1" style="width: 960px; height: 600px; background: #231F20"></canvas>
     <script src="Build/Builds.loader.js"></script>
 	<script>
       let unityInstance = null;
 
-      function sendToUnity() {
-        if (unityInstance) {
-          unityInstance.SendMessage('ObjectManager', 'IncPosition');
-        } else {
-          console.warn("Unity instance not ready yet");
-        }
-      }
+      // function sendToUnity() {
+      //   if (unityInstance) {
+      //     unityInstance.SendMessage('ObjectManager', 'IncPosition');
+      //   } else {
+      //     console.warn("Unity instance not ready yet");
+      //   }
+      // }
     </script>
     <script>
         // Mobile device style: fill the whole browser client area with the game canvas:

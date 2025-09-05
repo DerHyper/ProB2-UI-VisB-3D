@@ -56,6 +56,7 @@ import de.prob2.ui.internal.executor.FxThreadExecutor;
 import de.prob2.ui.menu.ExternalEditor;
 import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
+import static de.prob2.ui.visb.VisBServer.startServer;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -782,7 +783,8 @@ public final class VisBView extends BorderPane {
 
 	
 	private void openVisB3DBrowser() {
-		createVis3DServer();
+		// createVis3DServer();
+		startServer();
 
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
 			try {

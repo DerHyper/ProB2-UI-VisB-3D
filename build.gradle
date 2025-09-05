@@ -42,6 +42,18 @@ test {
 final snapshotsRepoUrl = "https://central.sonatype.com/repository/maven-snapshots/"
 repositories {
 	mavenCentral()
+	maven {
+        url "https://www3.hhu.de/stups/maven/repository/"
+        mavenContent {
+            snapshotsOnly()
+        }
+    }
+    maven {
+        url "https://www3.hhu.de/stups/maven/releases/"
+        mavenContent {
+            releasesOnly()
+        }
+    }
 	if (isSnapshot) {
 		maven {
 			name = "Sonatype snapshots"
@@ -138,6 +150,8 @@ dependencies {
 	implementation("org.apache.commons:commons-math3:3.6.1")
 	implementation("org.apache.velocity:velocity-engine-core:2.4.1")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava")
+	implementation(platform(group: "de.hhu.stups", name: "prob-java-bom", version: "4.15.0"))
+    implementation group: "de.hhu.stups", name: "de.prob2.kernel"
 
 	// for plugins
 	implementation("org.pf4j:pf4j:3.13.0")

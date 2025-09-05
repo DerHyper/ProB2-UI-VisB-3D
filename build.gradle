@@ -152,6 +152,7 @@ dependencies {
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava")
 	implementation(platform(group: "de.hhu.stups", name: "prob-java-bom", version: "4.15.0"))
     implementation group: "de.hhu.stups", name: "de.prob2.kernel"
+	implementation 'org.java-websocket:Java-WebSocket:1.6.0'
 
 	// for plugins
 	implementation("org.pf4j:pf4j:3.13.0")

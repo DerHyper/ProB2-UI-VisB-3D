@@ -754,8 +754,8 @@ public final class VisBView extends BorderPane {
 
 	
 	private void openVisB3DBrowser() {
-		// createVis3DServer();
-		VisBServer.startServer();
+		VisBWebSocketServer.startServerThread();
+		startHTTPServer();
 
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
 			try {
@@ -768,7 +768,7 @@ public final class VisBView extends BorderPane {
 	}
 
 	// Creates a local server on port 8080
-	private void createVis3DServer()	{
+	private void startHTTPServer()	{
         ProcessBuilder pb = new ProcessBuilder(
             "jwebserver",
             "-p", "8080",

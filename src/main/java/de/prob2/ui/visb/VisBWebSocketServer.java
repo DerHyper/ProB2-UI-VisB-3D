@@ -9,9 +9,9 @@ import org.java_websocket.server.WebSocketServer;
 
 /// Modified verion of the "Server Example" from 
 /// https://github.com/TooTallNate/Java-WebSocket/wiki#server-example, 05.09.2025, Java-WebSocket Server Example
-public class VisBServer extends WebSocketServer {
+public class VisBWebSocketServer extends WebSocketServer {
 
-	public VisBServer(InetSocketAddress address) {
+	public VisBWebSocketServer(InetSocketAddress address) {
 		super(address);
 	}
 
@@ -33,7 +33,7 @@ public class VisBServer extends WebSocketServer {
 	}
 
 	@Override
-	public void onMessage( WebSocket conn, ByteBuffer message ) {
+	public void onMessage(WebSocket conn, ByteBuffer message ) {
 		System.out.println("received ByteBuffer from "	+ conn.getRemoteSocketAddress());
 	}
 
@@ -47,12 +47,15 @@ public class VisBServer extends WebSocketServer {
 		System.out.println("server started successfully");
 	}
 
-
-	public static void startServer() {
+	/// WebSocket-Server (ws://localhost:8081/)
+	public static void startServerThread() {
 		String host = "localhost";
-		int port = 8080;
+		int port = 8081;
 
-		WebSocketServer server = new VisBServer(new InetSocketAddress(host, port));
-		server.run();
+		// Start WebSocket server as daemon thread
+		WebSocketServer server = new VisBWebSocketServer(new InetSocketAddress(host, port));
+		Thread serverThread = new Thread(server::run);
+		serverThread.setDaemon(true);
+		serverThread.start();
 	}
 }

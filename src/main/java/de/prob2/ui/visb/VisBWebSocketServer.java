@@ -11,8 +11,11 @@ import org.java_websocket.server.WebSocketServer;
 /// https://github.com/TooTallNate/Java-WebSocket/wiki#server-example, 05.09.2025, Java-WebSocket Server Example
 public class VisBWebSocketServer extends WebSocketServer {
 
+	private static VisBWebSocketServer instance;
+
 	public VisBWebSocketServer(InetSocketAddress address) {
 		super(address);
+		this.instance = this;
 	}
 
 	@Override
@@ -57,5 +60,11 @@ public class VisBWebSocketServer extends WebSocketServer {
 		Thread serverThread = new Thread(server::run);
 		serverThread.setDaemon(true);
 		serverThread.start();
+	}
+
+	public static void broadcastMessage(String message) {
+		// Broadcast message to all connected clients
+		if (instance != null)
+			instance.broadcast(message);
 	}
 }

@@ -580,12 +580,12 @@ public final class VisBView extends BorderPane {
 
 	private void updateVisualisation(State state) {
 		LOGGER.debug("Reloading VisB visualisation...");
-		VisBWebSocketServer.broadcastMessage("Test Message from ProB: " + state.toString());
 
 		updatingVisualisation.set(true);
 		cliExecutor.submit(() -> {
 			var getAttributesCmd = new GetVisBAttributeValuesCommand(state);
 			state.getStateSpace().execute(getAttributesCmd);
+			VisBWebSocketServer.broadcastMessage(getAttributesCmd.getValues().toString()); // Send current State to VisB3D
 			return getAttributesCmd.getValues();
 		}).whenCompleteAsync((res, exc) -> {
 			if (exc == null) {

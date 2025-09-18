@@ -580,6 +580,7 @@ public final class VisBView extends BorderPane {
 
 	private void updateVisualisation(State state) {
 		LOGGER.debug("Reloading VisB visualisation...");
+		VisBWebSocketServer.broadcastMessage("Test Message from ProB: " + state.toString());
 
 		updatingVisualisation.set(true);
 		cliExecutor.submit(() -> {

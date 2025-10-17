@@ -21,6 +21,7 @@ import javax.imageio.ImageIO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.CharStreams;
@@ -37,6 +38,7 @@ import de.prob.animator.domainobjects.VisBEvent;
 import de.prob.animator.domainobjects.VisBExportOptions;
 import de.prob.animator.domainobjects.VisBHover;
 import de.prob.animator.domainobjects.VisBItem;
+import de.prob.animator.domainobjects.VisBItem.VisBItemKey;
 import de.prob.animator.domainobjects.VisBSVGObject;
 import de.prob.statespace.State;
 import de.prob.statespace.StateSpace;
@@ -55,6 +57,7 @@ import de.prob2.ui.menu.ExternalEditor;
 import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.visb.help.UserManualStage;
+import de.prob2.ui.visb.visb3d.VisB3DDto;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -592,10 +595,8 @@ public final class VisBView extends BorderPane {
 				LOGGER.trace("Applying VisB attribute values...");
 				visBController.getAttributeValues().putAll(res);
 				LOGGER.trace("Done applying VisB attribute values");
-				
-				// Send current state as JSON to VisB3D
-				String currentState = res.toString();
-				VisBWebSocketServer.broadcastMessage("StateData"+currentState);
+
+				sendVisDataToVisB3D(res);
 
 				try {
 					this.resetMessages();
@@ -614,6 +615,25 @@ public final class VisBView extends BorderPane {
 			LOGGER.debug("VisB visualisation reloaded");
 			updatingVisualisation.set(false);
 		}, fxExecutor);
+	}
+
+	/**
+	 * Parse the visualization data {@link res} to a JSON String and
+	 * broadcast it via WebSocket to VisB3D.
+	 */
+	private void sendVisDataToVisB3D(Map<VisBItemKey, String> res) {
+		VisB3DDto dto = new VisB3DDto();
+		dto.addStateChanges(res);
+		
+		String currentState;
+		try {
+			currentState = this.objectMapper.writeValueAsString(dto);
+		} catch (JsonProcessingException e) {
+			alert(e, "visb.controller.alert.eval.formulas.header", "visb.exception.visb.file.error.header");
+			currentState = e.getMessage();
+		}
+
+		VisBWebSocketServer.broadcastMessage(currentState);
 	}
 
 	/**

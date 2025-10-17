@@ -4,9 +4,14 @@ public class VisB3DObjectDto {
     public enum MaterialDto {
         standard,
         red,
-        green,
+        organge,
         yellow,
+        green,
+        cyan,
         blue,
+        purple,
+        black,
+        grey,
         metallic,
         glassy,
         transparent

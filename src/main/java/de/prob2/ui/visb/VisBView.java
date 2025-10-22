@@ -623,8 +623,14 @@ public final class VisBView extends BorderPane {
 	 */
 	private void sendVisDataToVisB3D(Map<VisBItemKey, String> res) {
 		VisB3DDto dto = new VisB3DDto();
-		dto.addStateChanges(res);
 		
+		try {
+			dto.addStateChanges(res);
+		} catch (Exception e) {
+			alert(e, "visb.controller.alert.eval.formulas.header", "visb.exception.visb.file.error.header");
+			return;
+		}
+
 		String currentState;
 		try {
 			currentState = this.objectMapper.writeValueAsString(dto);

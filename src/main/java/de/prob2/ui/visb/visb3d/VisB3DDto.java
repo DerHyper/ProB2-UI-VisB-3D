@@ -72,7 +72,7 @@ public class VisB3DDto {
             case "scale":
                 state.scale = new Vector3Dto(Float.parseFloat(value), Float.parseFloat(value), Float.parseFloat(value));
             default:
-                break;
+                throw new IllegalArgumentException("Unknown attribute in VisB3D glue file: " + attribute);
         }
     }
 

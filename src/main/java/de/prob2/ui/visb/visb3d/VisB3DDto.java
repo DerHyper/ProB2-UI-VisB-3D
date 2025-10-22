@@ -39,7 +39,7 @@ public class VisB3DDto {
             case "material":
                 state.material = MaterialDto.valueOf(value);
                 break;
-            case "isActive":
+            case "is_active":
                 state.isActive = Boolean.valueOf(value);
                 break;
             case "x":

@@ -28,8 +28,8 @@ public class VisB3DObjectDto {
         this.name = name;
         this.material = null;
         this.isActive = null;
-        this.position = null;
-        this.rotation = null;
-        this.scale = null;
+        this.position = new Vector3Dto();
+        this.rotation = new Vector3Dto();
+        this.scale = new Vector3Dto();
     }
 }

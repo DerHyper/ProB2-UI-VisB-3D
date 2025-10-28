@@ -1,24 +1,8 @@
 package de.prob2.ui.visb.visb3d;
 
 public class VisB3DObjectDto {
-    public enum MaterialDto {
-        standard,
-        red,
-        orange,
-        yellow,
-        green,
-        cyan,
-        blue,
-        purple,
-        black,
-        grey,
-        metallic,
-        glassy,
-        transparent
-    }
-
     public String name;
-    public MaterialDto material;
+    public String material;
     public Boolean isActive;
     public Vector3Dto position;
     public Vector3Dto rotation;

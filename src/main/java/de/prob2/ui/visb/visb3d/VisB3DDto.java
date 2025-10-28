@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.prob.animator.domainobjects.VisBItem.VisBItemKey;
-import de.prob2.ui.visb.visb3d.VisB3DObjectDto.MaterialDto;
 
 /**
  * Data Transfer Object for VisB3D visualization data.
@@ -37,7 +36,7 @@ public class VisB3DDto {
         VisB3DObjectDto state = getObjectById(id);
         switch (attribute) {
             case "material":
-                state.material = MaterialDto.valueOf(value);
+                state.material = value;
                 break;
             case "is_active":
                 state.isActive = Boolean.valueOf(value);

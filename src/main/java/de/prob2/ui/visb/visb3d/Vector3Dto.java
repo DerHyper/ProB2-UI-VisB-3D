@@ -11,7 +11,6 @@ public class Vector3Dto {
         this.z = null;
     }
 
-
     public Vector3Dto(float x, float y, float z) {
         this.x = x;
         this.y = y;

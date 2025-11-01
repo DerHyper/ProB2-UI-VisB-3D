@@ -35,8 +35,13 @@ public class VisB3DDto {
         // Add attribute to the corresponding object
         VisB3DObjectDto state = getObjectById(id);
         switch (attribute) {
-            case "material":
-                state.material = value;
+            case "material-color":
+                state.material.color = value;
+                break;
+            case "material-metallic":
+                state.material.metallic = Float.valueOf(value);
+            case "material-smoothness":
+                state.material.smoothness = Float.valueOf(value);
                 break;
             case "is_active":
                 state.isActive = Boolean.valueOf(value);

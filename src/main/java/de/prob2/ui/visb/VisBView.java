@@ -787,12 +787,11 @@ public final class VisBView extends BorderPane {
 	private void openVisB3DBrowser() {
 		VisBWebSocketServer.startServerThread();
 		VisBHttpServer.startHTTPServer();
-		VisBHttpServer.sendGlbData("E:/User/Arbeiten/Studium/Master/Projektarbeit/Projektarbeit/3D-Models/TrafficLight.glb");
-
+		VisBHttpServer.sendGlbData("E:/User/Arbeiten/Studium/Master/Projektarbeit/Projektarbeit/3D-Models/TrafficLight.glb"); // TODO: Remove hardcoded path
 
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
 			try {
-				Desktop.getDesktop().browse(new URI("http://localhost:8080/")); // TODO: Change Port
+				Desktop.getDesktop().browse(new URI("http://localhost:"+VisBHttpServer.PORT+"/")); // TODO: Change Port
 			} catch (IOException | URISyntaxException e) {
 				// This should never happen.
 				e.printStackTrace();

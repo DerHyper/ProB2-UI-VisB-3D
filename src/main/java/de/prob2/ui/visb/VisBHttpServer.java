@@ -20,9 +20,9 @@ import com.sun.net.httpserver.HttpServer;
  */
 public class VisBHttpServer {
 
+    public static final int PORT = 8080;
     private static final Path ROOT_DIR = Paths
-            .get("E:/User/Arbeiten/Studium/Master/Projektarbeit/prob2_ui/src/main/resources/de/prob2/ui/visb/visb3d");
-    private static final int PORT = 8080;
+            .get(System.getProperty("user.dir")+"/src/main/resources/de/prob2/ui/visb/visb3d");
     private static final Logger LOGGER = LoggerFactory.getLogger(VisBWebSocketServer.class);
     private static byte[] glbData = null;
     private static String glbFileName = null;

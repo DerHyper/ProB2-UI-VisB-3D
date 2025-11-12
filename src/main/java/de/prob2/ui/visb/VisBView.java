@@ -786,7 +786,9 @@ public final class VisBView extends BorderPane {
 	
 	private void openVisB3DBrowser() {
 		VisBWebSocketServer.startServerThread();
-		startHTTPServer();
+		VisBHttpServer.startHTTPServer();
+		VisBHttpServer.sendGlbData("E:/User/Arbeiten/Studium/Master/Projektarbeit/Projektarbeit/3D-Models/TrafficLight.glb");
+
 
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
 			try {
@@ -795,21 +797,6 @@ public final class VisBView extends BorderPane {
 				// This should never happen.
 				e.printStackTrace();
 			}
-		}
-	}
-
-	// Creates a local server on port 8080
-	private void startHTTPServer()	{
-        ProcessBuilder pb = new ProcessBuilder(
-            "jwebserver",
-            "-p", "8080",
-            "-d", "E:/User/Arbeiten/Studium/Master/Projektarbeit/prob2_ui/src/main/resources/de/prob2/ui/visb/visb3d" // TODO: Exchange actual Server
-        );
-        try {
-			pb.start();
-		} catch (IOException e) {
-			LOGGER.error("VisB3d server could not be started.");
-			alert(e, "visb.exception.header","visb.controller.alert.visualisation.file");
 		}
 	}
 

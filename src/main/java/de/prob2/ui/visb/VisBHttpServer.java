@@ -57,8 +57,20 @@ public class VisBHttpServer {
             glbFileName = path.getFileName().toString();
             glbData = Files.readAllBytes(path);
         } catch (IOException e) {
-            LOGGER.error("VisBHttpServer: An error occurred while uploading {}: {}", filePath != null ? filePath : "Unknown", e);
+            LOGGER.error("VisBHttpServer: An error occurred while uploading {}: {}",
+                    filePath != null ? filePath : "Unknown", e);
         }
+    }
+
+    /**
+     * Gets the data URI for the cached GLB file
+     */
+    public static String getGlbDataUri()
+    {
+        if (glbFileName == null) {
+            return null;
+        }
+        return "http://localhost:" + PORT + "/" + glbFileName;
     }
 
     /**

@@ -502,6 +502,10 @@ public final class VisBView extends BorderPane {
 	}
 
 	private void loadVisualisationIntoWebView(VisBVisualisation visBVisualisation) {
+		if (visBVisualisation instanceof VisB3DVisualisation) {
+			this.openVisB3DBrowser();
+		}
+
 		final Path path = visBVisualisation.getSvgPath();
 		final String baseUrl;
 		if (path.equals(VisBController.NO_PATH)) {
@@ -514,8 +518,6 @@ public final class VisBView extends BorderPane {
 		this.ensureWebViewCreated();
 		LOGGER.debug("Loading generated VisB HTML code into WebView...");
 		this.webView.getEngine().loadContent(htmlFile);
-
-		openVisB3DBrowser();
 
 		this.runWhenHtmlLoaded(() -> {
 			JSObject window = this.getJSWindow();
@@ -596,7 +598,9 @@ public final class VisBView extends BorderPane {
 				visBController.getAttributeValues().putAll(res);
 				LOGGER.trace("Done applying VisB attribute values");
 
-				sendVisDataToVisB3D(res);
+				if (this.visBController.getVisBVisualisation() instanceof VisB3DVisualisation) {
+					sendVisDataToVisB3D(res);
+				}
 
 				try {
 					this.resetMessages();

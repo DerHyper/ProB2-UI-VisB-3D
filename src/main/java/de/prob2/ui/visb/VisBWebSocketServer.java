@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 public class VisBWebSocketServer extends WebSocketServer {
 
 	private static VisBWebSocketServer instance;
+	private static String initMessage = null;
 	private static final Logger LOGGER = LoggerFactory.getLogger(VisBWebSocketServer.class);
 
 	public VisBWebSocketServer(InetSocketAddress address) {
@@ -25,6 +26,7 @@ public class VisBWebSocketServer extends WebSocketServer {
 	public void onOpen(WebSocket conn, ClientHandshake handshake) {
 		conn.send("Welcome to the server!"); //This method sends a message to the new client
 		broadcast("new connection: " + handshake.getResourceDescriptor()); //This method sends a message to all clients connected
+		sendInitMessage();
 		LOGGER.info("VisBWebSocketServe: New connection to {}", conn.getRemoteSocketAddress());
 	}
 
@@ -71,5 +73,17 @@ public class VisBWebSocketServer extends WebSocketServer {
 		// Broadcast message to all connected clients
 		if (instance != null)
 			instance.broadcast(message);
+	}
+
+	public static void setInitMessage(String message) {
+		initMessage = message;
+	}
+
+	public static void sendInitMessage()
+	{
+		if (initMessage != null)
+		{
+			broadcastMessage("Init: "+initMessage);
+		}
 	}
 }

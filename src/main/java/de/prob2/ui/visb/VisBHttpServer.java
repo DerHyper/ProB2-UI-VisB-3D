@@ -51,11 +51,10 @@ public class VisBHttpServer {
      * Caches a GLB file to be served by the HTTP server
      * @param filePath the path to the GLB file
      */
-    public static void sendGlbData(String filePath) {
+    public static void sendGlbData(Path filePath) {
         try {
-            Path path = Paths.get(filePath);
-            glbFileName = path.getFileName().toString();
-            glbData = Files.readAllBytes(path);
+            glbFileName = filePath.getFileName().toString();
+            glbData = Files.readAllBytes(filePath);
         } catch (IOException e) {
             LOGGER.error("VisBHttpServer: An error occurred while uploading {}: {}",
                     filePath != null ? filePath : "Unknown", e);

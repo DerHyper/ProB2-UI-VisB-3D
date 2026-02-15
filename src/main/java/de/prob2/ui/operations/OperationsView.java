@@ -52,6 +52,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
@@ -190,6 +191,12 @@ public final class OperationsView extends BorderPane {
 	@FXML
 	private MenuItem opDescriptionsMenuItem;
 	@FXML
+	private BindableGlyph disabledOpsIcon;
+	@FXML
+	private BindableGlyph unambiguousIcon;
+	@FXML
+	private BindableGlyph opDescriptionsIcon;
+	@FXML
 	private TextField searchBar;
 	@FXML
 	private TextField randomText;
@@ -201,6 +208,8 @@ public final class OperationsView extends BorderPane {
 	private MenuItem fiveRandomEvents;
 	@FXML
 	private MenuItem tenRandomEvents;
+	@FXML
+	private CheckBox cbDeterministic;
 	@FXML
 	private CustomMenuItem someRandomEvents;
 	@FXML
@@ -302,17 +311,20 @@ public final class OperationsView extends BorderPane {
 
 		showDisabledOps.addListener((o, from, to) -> {
 			disabledOpsMenuItem.setText(to ? i18n.translate("operations.operationsView.menu.hideDisabled") : i18n.translate("operations.operationsView.menu.showDisabled"));
+			disabledOpsIcon.setIcon(to ? FontAwesome.Glyph.EYE_SLASH : FontAwesome.Glyph.EYE);
 			showDisabledOps.set(to);
 			update(currentTrace.get());
 		});
 
 		showUnambiguous.addListener((o, from, to) -> {
 			unambiguousMenuItem.setText(to ? i18n.translate("operations.operationsView.menu.hideUnambiguous") : i18n.translate("operations.operationsView.menu.showUnambiguous"));
+			unambiguousIcon.setIcon(to ? FontAwesome.Glyph.EYE_SLASH : FontAwesome.Glyph.EYE);
 			opsListView.refresh();
 		});
 
 		showOperationDescriptions.addListener((o, from, to) -> {
 			opDescriptionsMenuItem.setText(to ? i18n.translate("operations.operationsView.menu.hideDescriptions") : i18n.translate("operations.operationsView.menu.showDescriptions"));
+			opDescriptionsIcon.setIcon(to ? FontAwesome.Glyph.EYE_SLASH : FontAwesome.Glyph.EYE);
 			opsListView.refresh();
 		});
 
@@ -595,7 +607,13 @@ public final class OperationsView extends BorderPane {
 
 		Trace currentTrace = this.currentTrace.get();
 		if (currentTrace != null) {
-			this.cliExecutor.submit(() -> currentTrace.randomAnimation(operationCount)).whenCompleteAsync((res, exc) -> {
+			this.cliExecutor.submit(() -> {
+				if (cbDeterministic.isSelected()) {
+					return currentTrace.deterministicAnimation(operationCount);
+				} else {
+					return currentTrace.randomAnimation(operationCount);
+				}
+			}).whenCompleteAsync((res, exc) -> {
 				if (exc != null) {
 					if (!(exc instanceof CancellationException)) {
 						LOGGER.error("error while randomly animating", exc);

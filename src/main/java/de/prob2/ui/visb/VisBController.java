@@ -9,6 +9,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.io.MoreFiles;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -36,7 +39,6 @@ import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.simulation.interactive.UIInteractionHandler;
 import de.prob2.ui.simulation.simulators.RealTimeSimulator;
-
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -45,9 +47,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The VisBController controls the {@link VisBView}.
@@ -286,7 +285,12 @@ public final class VisBController {
 			if (!Files.isRegularFile(svgPath) || Files.size(svgPath) <= 0) {
 				throw new IOException("Given svg path is not a non-empty regular file: " + svgPath);
 			}
-			svgContent = Files.readString(svgPath);
+			if (svgPathString.toLowerCase().endsWith(".glb")) {
+				// GLB file specified, no SVG content to read
+				return new VisB3DVisualisation(svgPath, itemsCmd.getItems(), eventsCmd.getEvents(), svgObjectsCmd.getSvgObjects());
+			} else {
+				svgContent = Files.readString(svgPath);
+			}
 		}
 		
 		return new VisBVisualisation(svgPath, svgContent, itemsCmd.getItems(), eventsCmd.getEvents(), svgObjectsCmd.getSvgObjects());

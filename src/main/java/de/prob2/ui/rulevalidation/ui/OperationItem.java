@@ -11,7 +11,6 @@ import javafx.scene.control.TreeItem;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Christoph Heinzen
@@ -20,7 +19,6 @@ import java.util.Map;
 class OperationItem extends TreeItem<Object> {
 
 	private final I18n i18n;
-
 	private final RulesDataModel model;
 	private final String operation;
 	private boolean executable = true;
@@ -32,60 +30,58 @@ class OperationItem extends TreeItem<Object> {
 		this.model = model;
 		resultProperty.addListener((observable, oldValue, newValue) -> {
 			executable = true;
-			OperationItem.this.getChildren().clear();
+			this.getChildren().clear();
 			if (newValue instanceof RuleResult ruleResult) {
 				switch (ruleResult.getRuleState()) {
 					case FAIL, NOT_CHECKED -> createRuleChildren(ruleResult);
 					case SUCCESS -> {
-						OperationItem.this.getChildren().clear();
 						addSuccessMessages(ruleResult);
 						executable = false;
 					}
-					case DISABLED -> {
-						OperationItem.this.getChildren().clear();
-						executable = false;
-					}
+					case DISABLED -> executable = false;
 				}
-			} else if (newValue instanceof Map.Entry<?, ?> entry && operation instanceof ComputationOperation computationOperation) {
-				createComputationChildren(entry, computationOperation);
+			} else if (newValue instanceof ComputationStatus status && operation instanceof ComputationOperation computationOperation) {
+				createComputationChildren(status, computationOperation);
 			}
 		});
 	}
 
-	private void createComputationChildren(Map.Entry<?, ?> result, ComputationOperation op) {
-		ComputationStatus state = (ComputationStatus) result.getValue();
-		if (state == ComputationStatus.NOT_EXECUTED) {
-			List<String> failedDependencies = model.getFailedDependenciesOfComputation(op.getName());
-			List<String> notCheckedDependencies = model.getNotCheckedDependenciesOfComputation(op.getName());
+	private void createComputationChildren(ComputationStatus status, ComputationOperation op) {
+		if (status.isNotExecuted()) {
 			// create children for unchecked dependencies
+			List<String> notCheckedDependencies = model.getNotCheckedDependenciesOfComputation(op.getName());
 			if (!notCheckedDependencies.isEmpty()) {
 				TreeItem<Object> notCheckedItem = new TreeItem<>(i18n.translate("rulevalidation.table.dependencies.unchecked"));
-				Collections.sort(notCheckedDependencies);
 				for (String notChecked : notCheckedDependencies) {
 					notCheckedItem.getChildren().add(new TreeItem<>(notChecked));
 				}
 				this.getChildren().add(notCheckedItem);
 			}
+
 			// create children for failed dependencies
+			List<String> failedDependencies = model.getFailedDependenciesOfComputation(op.getName());
 			if (!failedDependencies.isEmpty()) {
 				TreeItem<Object> failedItem = new TreeItem<>(i18n.translate("rulevalidation.table.dependencies.failed"));
-				Collections.sort(failedDependencies);
 				for (String failed : failedDependencies) {
 					failedItem.getChildren().add(new TreeItem<>(failed));
 				}
 				this.getChildren().add(failedItem);
 				executable = false;
 			}
+
 			// create children for disabled dependencies
 			List<String> disabledDependencies = model.getDisabledDependencies(operation);
-			addDisabledDependencies(disabledDependencies);
+			if (!disabledDependencies.isEmpty()) {
+				addDisabledDependencies(disabledDependencies);
+				executable = false;
+			}
 		} else {
 			executable = false;
 		}
 	}
 
 	private void createRuleChildren(RuleResult result) {
-		switch(result.getRuleState()) {
+		switch (result.getRuleState()) {
 			case FAIL:
 				// create child items to show why the rule failed
 				addCounterExamples(result);
@@ -115,10 +111,13 @@ class OperationItem extends TreeItem<Object> {
 
 				// create child items for disabled dependencies
 				List<String> disabledDependencies = model.getDisabledDependencies(operation);
-				addDisabledDependencies(disabledDependencies);
-				break;
+				if (!disabledDependencies.isEmpty()) {
+					addDisabledDependencies(disabledDependencies);
+					executable = false;
+				}
 		}
 		addSuccessMessages(result);
+		addUncheckedMessages(result);
 	}
 
 	private void addCounterExamples(RuleResult result) {
@@ -134,6 +133,14 @@ class OperationItem extends TreeItem<Object> {
 			this.getChildren().add(new TreeItem<>(i18n.translate("rulevalidation.table.successful.infinitelyMany")));
 		} else {
 			addMessages(result.getSuccessMessages(), i18n.translate("rulevalidation.table.successful"));
+		}
+	}
+
+	private void addUncheckedMessages(RuleResult result) {
+		if (result.getNumberOfUnchecked() == -1) {
+			this.getChildren().add(new TreeItem<>(i18n.translate("rulevalidation.table.unchecked.infinitelyMany")));
+		} else {
+			addMessages(result.getUncheckedMessages(), i18n.translate("rulevalidation.table.unchecked"));
 		}
 	}
 

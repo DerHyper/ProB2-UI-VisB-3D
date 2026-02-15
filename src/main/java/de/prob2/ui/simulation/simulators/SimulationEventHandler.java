@@ -72,6 +72,9 @@ public class SimulationEventHandler {
 		Map<String, String> values = new HashMap<>();
 		if (parameters != null) {
 			EvaluationMode mode = EvaluationMode.extractMode(currentTrace.getModel());
+			if (mode == EvaluationMode.XTL) {
+				return parameters; // do not evaluate value in XTL mode too early to avoid type conflicts with STRING_TO_TERM (disadvantage: no SimB caching)
+			}
 			for (var e : parameters.entrySet()) {
 				var value = evaluateWithParameters(currentState, e.getValue(), activation.firingTransitionParameters(), activation.firingTransitionParametersPredicate(), mode);
 				values.put(e.getKey(), value);
@@ -106,7 +109,7 @@ public class SimulationEventHandler {
 			newExpression = expression;
 		} else {
 			switch (mode) {
-				case CLASSICAL_B:
+				case CLASSICAL_B, XTL:
 					// TODO: Rises problem when one of the parameters are the empty set. In this case, the type cannot be infered. Fix this in the future by inspecting the AST.
 					if(!parametersAsString.stream().map(expression::contains).findAny().get()) {
 						newExpression = expression;
@@ -260,7 +263,13 @@ public class SimulationEventHandler {
 		Map<String, String> parameters = activationOperationConfiguration.getFixedVariables();
 		var probabilities = activationOperationConfiguration.getProbabilisticVariables();
 		var transitionSelection = activationOperationConfiguration.getTransitionSelection();
-		int evaluatedTime = Integer.parseInt(evaluateWithParameters(state, time, parametersAsString, parameterPredicates, EvaluationMode.CLASSICAL_B));
+		String evaluatedTimeAsString = evaluateWithParameters(state, time, parametersAsString, parameterPredicates, EvaluationMode.CLASSICAL_B);
+		int evaluatedTime;
+		try {
+			evaluatedTime = Integer.parseInt(evaluatedTimeAsString);
+		} catch (NumberFormatException e) {
+			evaluatedTime = (int) Double.parseDouble(evaluatedTimeAsString);
+		}
 		String withPredicate = activationOperationConfiguration.getWithPredicate();
 
 		var activation = new Activation(opName, evaluatedTime, additionalGuards, activationKind, parameters, probabilities, transitionSelection, parametersAsString, parameterPredicates, withPredicate);

@@ -874,6 +874,7 @@
 	-fx-border-color: -prob-aqua;
 	-fx-border-width: 0.2em 0.0 0.0 0.0;
 	-fx-padding: 1.0em;
+	-fx-text-fill: -prob-white;
 }
 .dark .list-cell {
 	-fx-background-color: -prob-grey-75;
@@ -896,6 +897,15 @@
 }
 .dark .check-box:selected:hover > .box > .mark {
 	-fx-background-color: -prob-white-75;
+}
+.dark .radio-button {
+	-fx-background-color: transparent;
+	-fx-text-fill: -prob-white;
+}
+.dark .choice-box {
+	-fx-background-color: -prob-white;
+	-fx-text-fill: -prob-grey;
+	-fx-border-color: -prob-grey;
 }
 
 /* ================== DYNAMIC COMMAND VIEW ================= */
@@ -1146,6 +1156,8 @@
 	-fx-cell-size: 6.8em;
 	-fx-border-width: 2px 0px 0px 0px;
 	-fx-border-color: black;
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
 }
 .simulation-item .id {
 	-fx-font-family: ARIAL;
@@ -1298,7 +1310,11 @@
 /* ==================== SEARCH ======================== */
 
 .editor .searchResult {
-	-rtfx-background-color: grey;
+	-rtfx-background-color: rgba(255, 165, 0, 0.75);
+}
+
+.editor .currentSearchResult {
+	-rtfx-background-color: rgba(0, 122, 198, 0.5);
 }
 
 .search-error {

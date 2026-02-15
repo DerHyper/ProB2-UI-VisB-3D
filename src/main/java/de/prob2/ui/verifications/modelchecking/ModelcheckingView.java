@@ -9,7 +9,6 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import de.prob.check.StateSpaceStats;
-import de.prob.statespace.Trace;
 import de.prob2.ui.helpsystem.HelpButton;
 import de.prob2.ui.internal.DisablePropertyController;
 import de.prob2.ui.internal.FXMLInjected;
@@ -45,6 +44,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
@@ -118,6 +118,8 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 	@FXML
 	private SimpleStatsView simpleStatsView;
 
+	@FXML
+	private Node memoryContainer;
 	@FXML
 	private Label memoryUsage;
 
@@ -202,7 +204,7 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 				if (newVal != null) {
 					TableRow<ModelCheckingStep> row = cell.getTableRow();
 					BooleanBinding buttonBinding = Bindings.createBooleanBinding(
-						() -> !row.isEmpty() && !(row.getItem() == null) && !(row.getItem().getStats() == null) && row.getItem().hasTrace(),
+						() -> !row.isEmpty() && row.getItem() != null && row.getItem().hasTrace(),
 						row.emptyProperty(), row.itemProperty());
 					Node box = buildMessageCell(newVal, buttonBinding);
 					cell.graphicProperty().bind(Bindings.when(cell.emptyProperty()).then((Node) null).otherwise(box));
@@ -242,8 +244,8 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 
 		stepsTable.getSelectionModel().selectedItemProperty().addListener((observable, from, to) ->
 			Platform.runLater(() -> {
-				if (to != null && to.getStats() != null) {
-					showStats(to.getTimeElapsed(), to.getStats(), to.getMemoryUsed());
+				if (to != null) {
+					showStats(to);
 				} else {
 					hideStats();
 				}
@@ -268,7 +270,7 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 		container.setSpacing(5);
 		Button button = new Button(i18n.translate("verifications.modelchecking.modelcheckingView.contextMenu.showTrace"));
 		button.getStyleClass().add("button-blue");
-		button.setOnAction(actionEvent -> currentTrace.set(step.getTrace()));
+		button.setOnAction(actionEvent -> this.setTraceFromStep(step));
 
 		button.managedProperty().bind(buttonBinding);
 
@@ -315,18 +317,12 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 	protected CompletableFuture<?> executeItemImpl(ModelCheckingItem item, CheckingExecutors executors, ExecutionContext context) {
 		if (item instanceof ProBModelCheckingItem proBItem) {
 			statsView.updateWhileModelChecking(proBItem);
-			return super.executeItemImpl(item, executors, context).thenApply(res -> {
-				if (item.getResult() instanceof ModelCheckingItem.Result mcResult) {
-					Trace trace = mcResult.getLastStep().getTrace();
-					if (trace != null) {
-						currentTrace.set(trace);
-					}
-				}
-				return res;
-			});
-		} else {
-			return super.executeItemImpl(item, executors, context);
 		}
+		return super.executeItemImpl(item, executors, context).whenCompleteAsync((res, exc) -> {
+			if (exc == null) {
+				this.setTraceFromResult(item);
+			}
+		});
 	}
 
 	@FXML
@@ -340,16 +336,11 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 	private void continueModelChecking(ProBModelCheckingItem item) {
 		statsView.updateWhileModelChecking(item);
 		ExecutionContext context = getCurrentExecutionContext();
-		item.continueModelChecking(checkingExecutors, context).whenComplete((res, exc) -> {
+		item.continueModelChecking(checkingExecutors, context).whenCompleteAsync((res, exc) -> {
 			if (exc == null) {
-				if (item.getResult() instanceof ModelCheckingItem.Result mcResult) {
-					Trace trace = mcResult.getLastStep().getTrace();
-					if (trace != null) {
-						currentTrace.set(trace);
-					}
-				}
+				this.setTraceFromResult(item);
 			} else {
-				handleCheckException(exc);
+				this.handleCheckException(exc);
 			}
 		});
 	}
@@ -369,15 +360,15 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 			final TableRow<ModelCheckingStep> row = new TableRow<>();
 
 			row.setOnMouseClicked(event -> {
-				if (event.getClickCount() == 2 && !(row.isEmpty() || row.getItem() == null || row.getItem().getStats() == null || !row.getItem().hasTrace())) {
-					currentTrace.set(row.getItem().getTrace());
+				if (event.getClickCount() == 2 && !row.isEmpty()) {
+					this.setTraceFromStep(row.getItem());
 				}
 			});
 
 			MenuItem showTraceItem = new MenuItem(i18n.translate("verifications.modelchecking.modelcheckingView.contextMenu.showTrace"));
-			showTraceItem.setOnAction(e -> currentTrace.set(row.getItem().getTrace()));
+			showTraceItem.setOnAction(e -> this.setTraceFromStep(row.getItem()));
 			showTraceItem.disableProperty().bind(Bindings.createBooleanBinding(
-					() -> row.isEmpty() || row.getItem() == null || row.getItem().getStats() == null || !row.getItem().hasTrace(),
+					() -> row.isEmpty() || row.getItem() == null || !row.getItem().hasTrace(),
 					row.emptyProperty(), row.itemProperty()));
 
 			row.contextMenuProperty().bind(
@@ -396,13 +387,38 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 		return Optional.ofNullable(modelcheckingStage.getResult());
 	}
 
-	private void showStats(final long timeElapsed, final StateSpaceStats stats, final BigInteger memory) {
-		elapsedTime.setText(String.format("%.1f", timeElapsed / 1000.0) + " s");
+	private void showStats(ModelCheckingStep step) {
+		elapsedTime.setText(String.format("%.1f", step.getTimeElapsed() / 1000.0) + " s");
+
+		StateSpaceStats stats = step.getStats();
+		simpleStatsView.setStats(stats);
 		if (stats != null) {
 			progressBar.setProgress(calculateProgress(stats));
-			simpleStatsView.setStats(stats);
+			simpleStatsView.setVisible(true);
+			simpleStatsView.setManaged(true);
+		} else {
+			if (step.getStatus() == CheckingStatus.IN_PROGRESS) {
+				progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+			} else if (step.getStatus() == CheckingStatus.NOT_CHECKED) {
+				progressBar.setProgress(0);
+			} else {
+				progressBar.setProgress(1);
+			}
+			simpleStatsView.setVisible(false);
+			simpleStatsView.setManaged(false);
 		}
-		memoryUsage.setText(memory != null ? memory.divide(MIB_FACTOR) + " MiB" : "-");
+
+		BigInteger memory = step.getMemoryUsed();
+		if (memory != null) {
+			memoryUsage.setText(memory.divide(MIB_FACTOR) + " MiB");
+			memoryContainer.setVisible(true);
+			memoryContainer.setManaged(true);
+		} else {
+			memoryUsage.setText("-");
+			memoryContainer.setVisible(false);
+			memoryContainer.setManaged(false);
+		}
+
 		statsBox.setVisible(true);
 	}
 
@@ -414,5 +430,29 @@ public final class ModelcheckingView extends CheckingViewBase<ModelCheckingItem>
 
 	public void hideStats() {
 		statsBox.setVisible(false);
+	}
+
+	private void setTraceFromResult(ModelCheckingItem item) {
+		// the result is set in a Platform.runLater(...) call
+		// so we need to check after it has changed
+		Platform.runLater(() -> {
+			if (item != null && item.getResult() instanceof ModelCheckingItem.Result mcResult) {
+				this.setTraceFromStep(mcResult.getLastStep());
+			}
+		});
+	}
+
+	private void setTraceFromStep(ModelCheckingStep step) {
+		if (step != null && step.hasTrace()) {
+			this.checkingExecutors.cliExecutor().submit(step::getTrace).whenComplete((res, exc) -> {
+				if (exc == null) {
+					if (res != null) {
+						Platform.runLater(() -> this.currentTrace.set(res));
+					}
+				} else {
+					this.handleCheckException(exc);
+				}
+			});
+		}
 	}
 }

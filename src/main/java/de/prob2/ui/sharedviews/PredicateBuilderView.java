@@ -9,9 +9,13 @@ import java.util.Map;
 
 import com.google.inject.Inject;
 
+import de.be4.classicalb.core.parser.util.Utils;
 import de.prob.animator.domainobjects.FormulaExpand;
 import de.prob.animator.domainobjects.IEvalElement;
 import de.prob.formula.PredicateBuilder;
+import de.prob.model.eventb.EventBModel;
+import de.prob.model.representation.XTLModel;
+import de.prob.statespace.Transition;
 import de.prob2.ui.internal.FXMLInjected;
 import de.prob2.ui.internal.I18n;
 import de.prob2.ui.internal.StageManager;
@@ -129,11 +133,11 @@ public final class PredicateBuilderView extends VBox {
 	}
 	
 	public String getPredicate() {
-		final PredicateBuilder builder = new PredicateBuilder();
+		final PredicateBuilder builder = new PredicateBuilder(!(currentTrace.getModel() instanceof EventBModel));
 		final Map<String, String> filteredItems = new LinkedHashMap<>();
 		this.items.forEach(item -> {
-			if(!item.getValue().isEmpty()) {
-				filteredItems.put(item.getName(), item.getValue());
+			if (!item.getValue().isEmpty()) {
+				filteredItems.put(item.getName(), currentTrace.getModel().adjustValueForPredicate(item.getValue()));
 			}
 		});
 		builder.addMap(filteredItems);

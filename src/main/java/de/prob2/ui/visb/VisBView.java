@@ -1,11 +1,14 @@
 package de.prob2.ui.visb;
 
+import java.awt.Desktop;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +18,10 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.imageio.ImageIO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.CharStreams;
@@ -31,6 +38,7 @@ import de.prob.animator.domainobjects.VisBEvent;
 import de.prob.animator.domainobjects.VisBExportOptions;
 import de.prob.animator.domainobjects.VisBHover;
 import de.prob.animator.domainobjects.VisBItem;
+import de.prob.animator.domainobjects.VisBItem.VisBItemKey;
 import de.prob.animator.domainobjects.VisBSVGObject;
 import de.prob.statespace.State;
 import de.prob.statespace.StateSpace;
@@ -49,7 +57,7 @@ import de.prob2.ui.menu.ExternalEditor;
 import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.visb.help.UserManualStage;
-
+import de.prob2.ui.visb.visb3d.VisB3DDto;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -82,10 +90,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
 
@@ -460,7 +464,8 @@ public final class VisBView extends BorderPane {
 	private void updateDynamicSVGObjects(VisBVisualisation visBVisualisation) {
 		for (VisBSVGObject svgObject : visBVisualisation.getSVGObjects()) {
 			Map<String, String> attributes = svgObject.getAttributes();
-			JSObject object = (JSObject)this.getJSWindow().call("getOrCreateSvgElement", svgObject.getId(), svgObject.getObject());
+			String parentId = attributes.remove("parentId");
+			JSObject object = (JSObject)this.getJSWindow().call("getOrCreateSvgElement", svgObject.getId(), svgObject.getObject(), parentId);
 			for (Map.Entry<String, String> entry : attributes.entrySet()) {
 				this.getJSWindow().call("changeCreatedElementAttribute", object, entry.getKey(), entry.getValue());
 				// TODO: provide preference to specify which value has precedence: existing one in SVG or this one
@@ -497,6 +502,10 @@ public final class VisBView extends BorderPane {
 	}
 
 	private void loadVisualisationIntoWebView(VisBVisualisation visBVisualisation) {
+		if (visBVisualisation instanceof VisB3DVisualisation) {
+			this.openVisB3DBrowser();
+		}
+
 		final Path path = visBVisualisation.getSvgPath();
 		final String baseUrl;
 		if (path.equals(VisBController.NO_PATH)) {
@@ -581,12 +590,17 @@ public final class VisBView extends BorderPane {
 		cliExecutor.submit(() -> {
 			var getAttributesCmd = new GetVisBAttributeValuesCommand(state);
 			state.getStateSpace().execute(getAttributesCmd);
+
 			return getAttributesCmd.getValues();
 		}).whenCompleteAsync((res, exc) -> {
 			if (exc == null) {
 				LOGGER.trace("Applying VisB attribute values...");
 				visBController.getAttributeValues().putAll(res);
 				LOGGER.trace("Done applying VisB attribute values");
+
+				if (this.visBController.getVisBVisualisation() instanceof VisB3DVisualisation) {
+					sendVisDataToVisB3D(res);
+				}
 
 				try {
 					this.resetMessages();
@@ -605,6 +619,31 @@ public final class VisBView extends BorderPane {
 			LOGGER.debug("VisB visualisation reloaded");
 			updatingVisualisation.set(false);
 		}, fxExecutor);
+	}
+
+	/**
+	 * Parse the visualization data {@link res} to a JSON String and
+	 * broadcast it via WebSocket to VisB3D.
+	 */
+	private void sendVisDataToVisB3D(Map<VisBItemKey, String> res) {
+		VisB3DDto dto = new VisB3DDto();
+		
+		try {
+			dto.addStateChanges(res);
+		} catch (Exception e) {
+			alert(e, "visb.controller.alert.eval.formulas.header", "visb.exception.visb.file.error.header");
+			return;
+		}
+
+		String currentState;
+		try {
+			currentState = this.objectMapper.writeValueAsString(dto);
+		} catch (JsonProcessingException e) {
+			alert(e, "visb.controller.alert.eval.formulas.header", "visb.exception.visb.file.error.header");
+			currentState = e.getMessage();
+		}
+
+		VisBWebSocketServer.broadcastMessage(currentState);
 	}
 
 	/**
@@ -748,10 +787,28 @@ public final class VisBView extends BorderPane {
 		alert(exc, "visb.exception.visb.file.error.header", "visb.exception.visb.file.error");
 	}
 
+	
+	private void openVisB3DBrowser() {
+		VisBWebSocketServer.startServerThread();
+		VisBHttpServer.startHTTPServer();
+		VisBHttpServer.sendGlbData(visBController.getVisBVisualisation().getSvgPath());
+		VisBWebSocketServer.setInitMessage(VisBHttpServer.getGlbDataUri());
+
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+			try {
+				Desktop.getDesktop().browse(new URI("http://localhost:"+VisBHttpServer.PORT+"/"));
+			} catch (IOException | URISyntaxException e) {
+				// This should never happen.
+				e.printStackTrace();
+			}
+		}
+	}
+
 	@FXML
 	private void exportImage() {
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle(i18n.translate("visb.stage.filechooser.export.title"));
+		fileChooser.setInitialFileName(currentProject.getCurrentMachine().getName());
 		fileChooser.getExtensionFilters().add(fileChooserManager.getPngFilter());
 		Path path = fileChooserManager.showSaveFileChooser(fileChooser, FileChooserManager.Kind.VISUALISATIONS, stageManager.getCurrent());
 		exportImageWithPath(path);
@@ -774,6 +831,7 @@ public final class VisBView extends BorderPane {
 	private void exportSvg() {
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle(i18n.translate("visb.stage.filechooser.export.title"));
+		fileChooser.setInitialFileName(currentProject.getCurrentMachine().getName());
 		fileChooser.getExtensionFilters().add(fileChooserManager.getSvgFilter());
 		Path path = fileChooserManager.showSaveFileChooser(fileChooser, FileChooserManager.Kind.VISUALISATIONS, stageManager.getCurrent());
 		exportSvgWithPath(path);

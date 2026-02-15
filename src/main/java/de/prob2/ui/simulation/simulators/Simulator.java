@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 
 import de.prob.animator.command.GetPreferenceCommand;
+import de.prob.model.representation.XTLModel;
 import de.prob.statespace.State;
 import de.prob.statespace.Trace;
 import de.prob.statespace.Transition;
@@ -34,8 +35,12 @@ import de.prob2.ui.simulation.external.ExternalSimulatorExecutor;
 import de.prob2.ui.simulation.simulators.check.ISimulationPropertyChecker;
 
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
+
+import static de.prob.statespace.Transition.SETUP_CONSTANTS_NAME;
 
 public abstract class Simulator {
 
@@ -54,6 +59,7 @@ public abstract class Simulator {
 	protected Map<String, DiagramConfiguration> activationConfigurationMap;
 	protected Map<String, Set<String>> operationToActivations;
 	protected List<Integer> timestamps;
+	protected ObjectProperty<Activation> performedActivation;
 	protected int maxTransitionsBeforeInitialisation;
 	protected int maxTransitions;
 	protected boolean noActivationQueued;
@@ -113,9 +119,11 @@ public abstract class Simulator {
 		this.activationConfigurationsSorted = new CopyOnWriteArrayList<>();
 		this.operationToActivations = new ConcurrentHashMap<>();
 		this.timestamps = new CopyOnWriteArrayList<>();
+		this.performedActivation = new SimpleObjectProperty<>(null);
 
 		this.delay = 0;
 		this.time.set(0);
+		this.performedActivation.set(null);
 		this.stepCounter = 0;
 		this.noActivationQueued = false;
 
@@ -149,7 +157,7 @@ public abstract class Simulator {
 					this.externalSimulatorExecutor = new ExternalSimulatorExecutor(this.objectMapperProvider.get(), this, ((SimulationExternalConfiguration) config).getExternalPath());
 					this.externalSimulatorExecutor.start();
 				} else {
-					if(!this.externalSimulatorExecutor.getPythonFile().equals(((SimulationExternalConfiguration) config).getExternalPath())) {
+					if(this instanceof RealTimeSimulator || !this.externalSimulatorExecutor.getPythonFile().equals(((SimulationExternalConfiguration) config).getExternalPath())) {
 						this.externalSimulatorExecutor.close();
 						this.externalSimulatorExecutor = new ExternalSimulatorExecutor(this.objectMapperProvider.get(), this, ((SimulationExternalConfiguration) config).getExternalPath());
 						this.externalSimulatorExecutor.start();
@@ -240,11 +248,8 @@ public abstract class Simulator {
 
 	private void activateBeforeInitialisation(Trace trace, String operation) {
 		if(config instanceof SimulationExternalConfiguration) {
-			createDynamicActivation(Transition.SETUP_CONSTANTS_NAME, Transition.SETUP_CONSTANTS_NAME, "0", 0,
-					null, ActivationKind.SINGLE, null, null, TransitionSelection.FIRST,
-					null, false, null, null);
-		}
-		if(configurationToActivation.containsKey(operation)) {
+			processExternalConfiguration(trace);
+		} else if(configurationToActivation.containsKey(operation)) {
 			ActivationOperationConfiguration setupConfiguration = (ActivationOperationConfiguration) activationConfigurationMap.get(operation);
 			simulationEventHandler.activateOperation(trace.getCurrentState(), setupConfiguration, new ArrayList<>(), "1=1");
 		}
@@ -252,9 +257,11 @@ public abstract class Simulator {
 
 	public void setupBeforeSimulation(Trace trace) {
 		updateStartingInformation(trace);
-		if(!trace.getCurrentState().isInitialised()) {
-			activateBeforeInitialisation(trace, Transition.SETUP_CONSTANTS_NAME);
-			if(!(config instanceof SimulationExternalConfiguration)) {
+		if (currentTrace.getModel() instanceof XTLModel) {
+			activateBeforeInitialisation(trace, "start_xtl_system");
+		} else if (!trace.getCurrentState().isInitialised()) {
+			activateBeforeInitialisation(trace, SETUP_CONSTANTS_NAME);
+			if (!(config instanceof SimulationExternalConfiguration)) {
 				activateBeforeInitialisation(trace, Transition.INITIALISE_MACHINE_NAME);
 			}
 		}
@@ -275,7 +282,6 @@ public abstract class Simulator {
 	}
 
 	public Trace executeActivatedOperation(ActivationOperationConfiguration activationConfig, Trace trace) {
-
 		String id = activationConfig.getId();
 		List<String> activationConfiguration = activationConfig.getActivating();
 
@@ -299,6 +305,9 @@ public abstract class Simulator {
 				String parameterPredicate = transition.getParameterPredicate() == null ? "1=1" : transition.getParameterPredicate();
 				simulationEventHandler.activateOperations(newTrace.getCurrentState(), activationConfiguration, parameterNames, parameterPredicate);
 				timestamps.add(time.get());
+				// Set null to make sure that property receives new updates although activations are equal
+				performedActivation.set(null);
+				performedActivation.set(activation);
 				simulationEventHandler.updateVariables(newTrace.getCurrentState(), variables, activationConfig.getUpdating());
 				processExternalConfiguration(newTrace);
 			} else if("skip".equals(activation.operation())) {
@@ -368,6 +377,10 @@ public abstract class Simulator {
 
 	public List<Integer> getTimestamps() {
 		return timestamps;
+	}
+
+	public ObjectProperty<Activation> performedActivationProperty() {
+		return performedActivation;
 	}
 
 	public int getMaxTransitions() {

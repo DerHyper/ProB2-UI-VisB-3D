@@ -59,6 +59,7 @@ import de.prob2.ui.menu.ExternalEditor;
 import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.visb.visb3d.VisB3DDto;
+import de.prob2.ui.visb.visb3d.VisB3DMessageHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -817,7 +818,8 @@ public final class VisBView extends BorderPane {
 
 	
 	private void openVisB3DBrowser() {
-		VisBWebSocketServer.startServerThread();
+		VisB3DMessageHandler messageHandler = new VisB3DMessageHandler(visBConnector);
+		VisBWebSocketServer.startServerThread(messageHandler);
 		VisBHttpServer.startHTTPServer();
 		VisBHttpServer.sendGlbData(visBController.getVisBVisualisation().getSvgPath());
 		VisBWebSocketServer.setInitMessage(VisBHttpServer.getGlbDataUri());

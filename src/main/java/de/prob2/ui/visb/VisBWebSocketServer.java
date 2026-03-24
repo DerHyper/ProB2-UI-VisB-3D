@@ -9,6 +9,9 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.prob2.ui.visb.visb3d.VisB3DMessageHandler;
+
+
 /// Modified verion of the "VisBWebSocketServe Example" from 
 /// https://github.com/TooTallNate/Java-WebSocket/wiki#server-example, 05.09.2025, Java-WebSocket Server Example
 public class VisBWebSocketServer extends WebSocketServer {
@@ -16,10 +19,12 @@ public class VisBWebSocketServer extends WebSocketServer {
 	private static VisBWebSocketServer instance;
 	private static String initMessage = null;
 	private static final Logger LOGGER = LoggerFactory.getLogger(VisBWebSocketServer.class);
+	private static VisB3DMessageHandler messageHandler;
 
-	public VisBWebSocketServer(InetSocketAddress address) {
+	public VisBWebSocketServer(InetSocketAddress address, VisB3DMessageHandler messageHandler) {
 		super(address);
 		this.instance = this;
+		this.messageHandler = messageHandler;
 	}
 
 	@Override
@@ -40,6 +45,7 @@ public class VisBWebSocketServer extends WebSocketServer {
 	@Override
 	public void onMessage(WebSocket conn, String message) {
 		LOGGER.info("VisBWebSocketServe: Received message from {}: {}", conn.getRemoteSocketAddress(), message);
+		messageHandler.handleMessage(message);
 	}
 
 	@Override
@@ -58,12 +64,12 @@ public class VisBWebSocketServer extends WebSocketServer {
 	}
 
 	/// WebSocket-Server (ws://localhost:8081/)
-	public static void startServerThread() {
+	public static void startServerThread(VisB3DMessageHandler messageHandler) {
 		String host = "localhost";
 		int port = 8081;
 
 		// Start WebSocket server as daemon thread
-		WebSocketServer server = new VisBWebSocketServer(new InetSocketAddress(host, port));
+		WebSocketServer server = new VisBWebSocketServer(new InetSocketAddress(host, port), messageHandler);
 		Thread serverThread = new Thread(server::run);
 		serverThread.setDaemon(true);
 		serverThread.start();

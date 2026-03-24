@@ -54,7 +54,7 @@ public class WSMessageDto
         this.ctrlKey = false;
         this.metaKey = false;
         this.shiftKey = false;
-        this.jsVars = "";
+        this.jsVars = "{}";
     }
 
     public static WSMessageDto fromJsonString(String str) {

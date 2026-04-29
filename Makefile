@@ -32,22 +32,24 @@ clean:
 PROB2UI_VERSION=1.3.1
 SNAPSH=
 # comment in next line for SNAPSHOT builds
-SNAPSH=-SNAPSHOT
+#SNAPSH=-SNAPSHOT
 # this is the name of the App in the DMG as created by jpackage
 # it is set in the build.gradle file (applicationName)
 # if the name differs from the internal app name we get an error
 #  (unsealed contents present in the bundle root) when signing the app
-DMGPROB2=ProB\ 2\ UI
+DMGPROB2=ProB2-UI-aarch64
 # internal name within Contents/MacOs:
-APPRPOB2=ProB\ 2\ UI
+APPRPOB2=ProB2-UI
 DMGFILE=build/distributions/$(DMGPROB2)-$(PROB2UI_VERSION).dmg
 ZIP_FILE=build/distributions/ProB2-UI-ForNotarization.zip
+FINAL_ZIP_FILE=build/distributions/ProB2-UI$(ARCHSUFFIX)-$(PROB2UI_VERSION)-notarized.zip
 # app file available after mounting dmg; could be done by command-line command
-VOLUME=/Volumes/$(DMGPROB2)/
-DMGAPPFILE=$(VOLUME)$(DMGPROB2).app
+VOLUME=/Volumes/$(APPRPOB2)/
+DMGAPPFILE=$(VOLUME)$(APPRPOB2).app
 BUILDDIR=build/distributions/
 #Name of the .app folder:
-APPFILE=$(BUILDDIR)ProB\ 2\ UI.app
+#APPFILE=$(BUILDDIR)ProB\ 2\ UI.app
+APPFILE=$(BUILDDIR)ProB2-UI.app
 AC_USERNAME = "michael.leuschel@hhu.de"
 ADC_CERTIFICATE_NAME = "Michael Leuschel (794LFG5T52)"
 
@@ -59,7 +61,7 @@ $(DMGFILE): build.gradle src/main/java/de/prob2/ui/*.java src/main/java/de/prob2
 	./gradlew jpackage
 
 $(APPFILE): $(DMGFILE)
-	@echo "Step 1 after running make gradlew jpackage: 1a) Mounting the DMG"
+	@echo "Step 1 after running make gradlew jpackage: 1a) Mounting the DMG $(DMGFILE)"
 	sudo hdiutil attach $(DMGFILE)
 	@echo " 1b) Copying APP ($DMGAPPFILE) to $(BUILDDIR)"
 	cp -R $(DMGAPPFILE) $(APPFILE)
@@ -71,11 +73,13 @@ $(APPFILE): $(DMGFILE)
 VERSION=$(PROB2UI_VERSION)
 PROB2APP_CONTENTS = $(APPFILE)/Contents/
 JAR_TO_SIGN = $(BUILDDIR)jar-to-sign
+ARCHSUFFIX=-aarch64
+ARCHSUFFIX2=-x86-64
 $(JAR_TO_SIGN): $(APPFILE)
-	@echo "Step 2: Unpacking JAR in APP so that we can sign the components"
-	#unzip -l $(PROB2APP_CONTENTS)app/prob2-ui-$(VERSION)-mac.jar
+	@echo "Step 2: Unpacking JAR in APP $(APPFILE) so that we can sign the components"
+	#unzip -l $(PROB2APP_CONTENTS)app/prob2-ui-$(VERSION)-mac$(ARCHSUFFIX).jar
 	@echo " Unpacking to $(JAR_TO_SIGN)"
-	unzip $(PROB2APP_CONTENTS)app/prob2-ui-$(VERSION)$(SNAPSH)-mac.jar -d $(JAR_TO_SIGN)
+	unzip $(PROB2APP_CONTENTS)app/prob2-ui-$(VERSION)$(SNAPSH)-mac$(ARCHSUFFIX).jar -d $(JAR_TO_SIGN)
 
 libs=libjavafx_iio.dylib libjfxmedia_avf.dylib libglib-lite.dylib libglib-lite.dylib libfxplugins.dylib libglass.dylib libjavafx_font.dylib libgstreamer-lite.dylib libjfxwebkit.dylib libprism_common.dylib libprism_es2.dylib libdecora_sse.dylib libjfxmedia.dylib libprism_sw.dylib
 
@@ -87,39 +91,47 @@ macos_sign: $(JAR_TO_SIGN)
 	@echo "Step 3: Signing"
 	@echo "3a: Signing Java and JavaFX dylibs inside unpacked JAR $(JAR_TO_SIGN)"
 	for file in $(libs); do $(CODESIGNRT2) $(JAR_TO_SIGN)/$$file ; done
-	$(CODESIGNRT2) "$(JAR_TO_SIGN)/com/sun/jna/darwin/libjnidispatch.jnilib"
+	$(CODESIGNRT2) "$(JAR_TO_SIGN)/com/sun/jna/darwin$(ARCHSUFFIX)/libjnidispatch.jnilib"
+	# for some reason there is also a x86 jnilib there which needs to be signed:
+	$(CODESIGNRT2) "$(JAR_TO_SIGN)/com/sun/jna/darwin$(ARCHSUFFIX2)/libjnidispatch.jnilib"
 	make makejar
-	@echo "3c: Signing app binary"
+	@echo "3c: Signing app binary $(PROB2APP_CONTENTS)MacOS/$(APPRPOB2)"
+	$(CODESIGNRT2) $(PROB2APP_CONTENTS)runtime/Contents/MacOS/libjli.dylib
 	$(CODESIGNRT2) $(PROB2APP_CONTENTS)MacOS/$(APPRPOB2)
 makejar:
 	@echo "Step 3b: Repacking the JAR with signed components"
-	rm -f $(PROB2APP_CONTENTS)app/prob2-ui-$(VERSION)-mac.jar
-	jar cvf $(PROB2APP_CONTENTS)app/prob2-ui-$(VERSION)-mac.jar -C $(JAR_TO_SIGN)/ .
+	rm -f $(PROB2APP_CONTENTS)app/prob2-ui-$(VERSION)-mac$(ARCHSUFFIX).jar
+	jar cvf $(PROB2APP_CONTENTS)app/prob2-ui-$(VERSION)-mac$(ARCHSUFFIX).jar -C $(JAR_TO_SIGN)/ .
 
 check:
 	@echo "4: Check signing (of $(JAR_TO_SIGN))"
-	codesign -dvvv $(JAR_TO_SIGN)/com/sun/jna/darwin/libjnidispatch.jnilib
-	codesign -vv --deep-verify $(JAR_TO_SIGN)/com/sun/jna/darwin/libjnidispatch.jnilib
-	codesign -d --entitlements :- $(JAR_TO_SIGN)/com/sun/jna/darwin/libjnidispatch.jnilib
+	codesign -dvvv $(JAR_TO_SIGN)/com/sun/jna/darwin$(ARCHSUFFIX)/libjnidispatch.jnilib
+	codesign -vv --deep-verify $(JAR_TO_SIGN)/com/sun/jna/darwin$(ARCHSUFFIX)/libjnidispatch.jnilib
+	codesign -d --entitlements :- $(JAR_TO_SIGN)/com/sun/jna/darwin$(ARCHSUFFIX)/libjnidispatch.jnilib
+	codesign -d --entitlements :- $(JAR_TO_SIGN)/com/sun/jna/darwin$(ARCHSUFFIX2)/libjnidispatch.jnilib
 	@echo "Check signing of Java and JavaFX dylibs"
 	for file in $(libs); do codesign -vv --deep-verify $(JAR_TO_SIGN)/$$file ; done
 	codesign -vv --deep-verify $(PROB2APP_CONTENTS)MacOS/$(APPRPOB2)
+	codesign -vv --deep-verify $(PROB2APP_CONTENTS)runtime/Contents/MacOS/libjli.dylib
 
 
 $(ZIP_FILE): $(PROB2APP_CONTENTS)MacOS/$(APPRPOB2)
 	@echo "Step 5: Putting APP into a zipfile for Apple's notarization (into $(ZIP_FILE))"
-	#/usr/bin/ditto -c -k --keepParent "$(APPFILE)" $(ZIP_FILE)
-	zip -vr $(ZIP_FILE) $(APPFILE)
+	# (ditto creates a reproducible, resource‑preserving archive)
+	/usr/bin/ditto -c -k --keepParent --sequesterRsrc "$(APPFILE)" $(ZIP_FILE)
+	#zip -vr $(ZIP_FILE) $(APPFILE)
 	
-NOTVERS = 1.3.1
-notarize-app-old: $(ZIP_FILE)
-	@echo "Step 6: Sending Notarization request to Apple for APP (in zipfile $(ZIP_FILE))"
-	xcrun altool --notarize-app\
-               --primary-bundle-id "de.hhu.stups.prob2ui.$(NOTVERS).zip"\
-               --username $(AC_USERNAME)\
-               --password "@keychain:AC_PASSWORD"\
-               --file $(ZIP_FILE)
-
+NOTVERS = 1.3.2
+notarize-info: $(ZIP_FILE)
+	@echo "JAR_TO_SIGN =  $(JAR_TO_SIGN)"
+	@echo "PROB2APP_CONTENTS =  $(PROB2APP_CONTENTS)"
+	@echo "APPRPOB2 =  $(APPRPOB2)"
+	@echo "APPFILE =  $(APPFILE)"
+	@echo "ZIP_FILE (for Apple) =  $(ZIP_FILE)"
+	@echo "FINAL_ZIP_FILE (for ProB Website)=  $(FINAL_ZIP_FILE)"
+	@echo "PROB2UI_VERSION =  $(PROB2UI_VERSION)"
+	@echo "(PROB2APP_CONTENTS)MacOS/(APPRPOB2) = $(PROB2APP_CONTENTS)MacOS/$(APPRPOB2)"
+	@echo "Notarization request to Apple for APP is in zipfile $(ZIP_FILE)"
 notarize-app: $(ZIP_FILE)
 	@echo "Step 6: Sending Notarization request to Apple for APP (in zipfile $(ZIP_FILE))"
 	xcrun notarytool submit $(ZIP_FILE) \
@@ -128,10 +140,10 @@ notarize-app: $(ZIP_FILE)
 	echo "In case of errors run:"
 	echo " xcrun notarytool log --keychain-profile \"notarytool\"  HASH"
 
-HASH=241970b9-c590-46c9-8d4c-71935772aaea
+HASH=72edc8c1-873a-4521-a668-7099ceb46e53
 info:
 	@echo "Step 6b: Obtaining information about a particular notarization request"
-	xcrun altool --notarization-info $(HASH) -u $(AC_USERNAME)
+	xcrun notarytool log --keychain-profile "notarytool"  $(HASH)
 
 staple-app:
 	@echo "Step 7: after successful notarization: Stapling the APP $(APPFILE)"
@@ -141,7 +153,8 @@ verify-app:
 	codesign -vv --deep-verify $(APPFILE)
 	@echo "Step 8: check stapling of the APP $(APPFILE)"
 	spctl --assess --type execute --verbose $(APPFILE)
-	@echo "Step 9: You can now zip and upload $(APPFILE) to the download area /stupshome/stups/downloads/prob2/ProB2-UI-$(PROB2UI_VERSION)-notarized.zip"
+	/usr/bin/ditto -c -k --keepParent --sequesterRsrc "$(APPFILE)" "$(FINAL_ZIP_FILE)"
+	@echo "Step 9: You can now zip and upload $(FINAL_ZIP_FILE) to the download area /stupshome/stups/downloads/prob2/ProB2-UI-$(PROB2UI_VERSION)-notarized.zip"
 
 
 

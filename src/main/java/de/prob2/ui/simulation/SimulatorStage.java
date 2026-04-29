@@ -21,8 +21,11 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 
+import de.prob.animator.domainobjects.AbstractEvalResult;
+import de.prob.animator.domainobjects.EvalResult;
 import de.prob.statespace.LoadedMachine;
 import de.prob.statespace.OperationInfo;
+import de.prob.statespace.State;
 import de.prob.statespace.StateSpace;
 import de.prob.statespace.Trace;
 import de.prob2.ui.animation.tracereplay.TraceFileHandler;
@@ -56,6 +59,7 @@ import de.prob2.ui.simulation.interactive.UIInteractionHandler;
 import de.prob2.ui.simulation.model.SimulationModel;
 import de.prob2.ui.simulation.schedulingTable.SchedulingItemTableCell;
 import de.prob2.ui.simulation.schedulingTable.SchedulingTableItem;
+import de.prob2.ui.simulation.simulators.Activation;
 import de.prob2.ui.simulation.simulators.RealTimeSimulator;
 import de.prob2.ui.simulation.simulators.Scheduler;
 import de.prob2.ui.simulation.simulators.check.SimulationStatsView;
@@ -349,6 +353,22 @@ public final class SimulatorStage extends Stage {
 	@FXML
 	private TableColumn<SchedulingTableItem, SchedulingTableItem> activationInformationColumn;
 
+
+	@FXML
+	private TableView<SchedulingTableItem> schedulingFutureItems;
+
+	@FXML
+	private TableColumn<SchedulingTableItem, Integer> futureActivationTimeColumn;
+
+	@FXML
+	private TableColumn<SchedulingTableItem, SchedulingTableItem> futureActivationInformationColumn;
+
+	@FXML
+	private Label lbUnsavedWarning;
+
+	@FXML
+	private ChoiceBox<Integer> cbTimestampsForLogging;
+
 	private final SimpleListProperty<String> operationsProperty;
 
 
@@ -424,6 +444,21 @@ public final class SimulatorStage extends Stage {
 				cbSimulation.getItems().setAll(machine.getSimulations());
 			}
 
+			State state = currentTrace.getCurrentState();
+			if(state == null) {
+				return;
+			}
+			AbstractEvalResult evalResult = state.eval("SIMB_JSON_FILE");
+			boolean hasConfiguredSimulation = evalResult instanceof EvalResult;
+			if(hasConfiguredSimulation) {
+				String definitionsPath = ((EvalResult) evalResult).getValue();
+				definitionsPath = definitionsPath.replaceAll("\"", "");
+				SimulationModel model = new SimulationModel(Paths.get(definitionsPath));
+				if(!cbSimulation.getItems().contains(model)) {
+					cbSimulation.getItems().add(0, model);
+				}
+			}
+
 			// If the last selected simulation disappears, select a different one if possible.
 			// Note: it's important to check the selected index and not the selected item!
 			// When items are removed from the list,
@@ -433,6 +468,7 @@ public final class SimulatorStage extends Stage {
 			if (cbSimulation.getSelectionModel().getSelectedIndex() == -1 && !cbSimulation.getItems().isEmpty()) {
 				cbSimulation.getSelectionModel().selectFirst();
 			}
+			cbTimestampsForLogging.getItems().clear();
 		};
 
 		stageManager.loadFXML(this, "simulator_stage.fxml");
@@ -499,8 +535,25 @@ public final class SimulatorStage extends Stage {
 			operations.add("skip");
 			operationsProperty.clear();
 			operationsProperty.setAll(operations);
+			savedProperty.set(true);
 		});
 		cbSimulation.disableProperty().bind(currentTrace.isNull().or(realTimeSimulator.runningProperty()).or(currentProject.currentMachineProperty().isNull()));
+
+		cbTimestampsForLogging.getSelectionModel().selectedItemProperty().addListener((observable, from, to) -> {
+			schedulingFutureItems.getItems().clear();
+			if(to == null) {
+				return;
+			}
+			List<Integer> timestampsForLogging = realTimeSimulator.getTimestampsForLogging();
+			int indexOfSelectedTime = timestampsForLogging.indexOf(to);
+			List<List<Activation>> activationsForLoggedTimestamps = realTimeSimulator.getActivationsForLoggedTimestamps();
+			List<Activation> activationsForLastTimestamp = activationsForLoggedTimestamps.get(indexOfSelectedTime);
+			for(Activation activation : activationsForLastTimestamp) {
+				schedulingFutureItems.getItems().add(new SchedulingTableItem(activation.time(), activation));
+			}
+		});
+		cbTimestampsForLogging.itemsProperty().bind(realTimeSimulator.timestampsForLoggingProperty());
+
 
 		btAddSimulation.disableProperty().bind(currentTrace.isNull().or(disablePropertyController.disableProperty()).or(configurationPath.isNull()).or(realTimeSimulator.runningProperty()).or(currentProject.currentMachineProperty().isNull()));
 
@@ -532,7 +585,7 @@ public final class SimulatorStage extends Stage {
 			if (to) {
 				stopSimulator(lastSimulator.get());
 			}
-			resetSimulator();
+			Platform.runLater(() -> resetSimulator());
 		});
 
 		final ChangeListener<Machine> machineChangeListener = (observable, from, to) -> {
@@ -544,6 +597,7 @@ public final class SimulatorStage extends Stage {
 			simulationDiagramItems.getItems().clear();
 			simulationItems.itemsProperty().unbind();
 			loadSimulationsFromMachine(from, to);
+			savedProperty.set(true);
 		};
 		currentProject.currentMachineProperty().addListener(machineChangeListener);
 		machineChangeListener.changed(null, null, currentProject.getCurrentMachine());
@@ -570,13 +624,17 @@ public final class SimulatorStage extends Stage {
 		activationInformationColumn.setCellFactory(lv -> new SchedulingItemTableCell(stageManager, i18n));
 		activationInformationColumn.setCellValueFactory(features -> new SimpleObjectProperty<>(features.getValue()));
 
+		futureActivationTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
+		futureActivationInformationColumn.setCellFactory(lv -> new SchedulingItemTableCell(stageManager, i18n));
+		futureActivationInformationColumn.setCellValueFactory(features -> new SimpleObjectProperty<>(features.getValue()));
+
 		btRemoveSimulation.disableProperty().bind(cbSimulation.getSelectionModel().selectedItemProperty().isNull());
 		btAddDiagramElement.disableProperty().bind(Bindings.createBooleanBinding(() ->
 				cbSimulation.getSelectionModel().selectedItemProperty().get() == null || configurationPath.get() == null || !configurationPath.get().toString().endsWith(".json"),
 				cbSimulation.getSelectionModel().selectedItemProperty(), configurationPath));
 
 		btRemoveDiagramElement.disableProperty().bind(simulationDiagramItems.getSelectionModel().selectedItemProperty().isNull());
-
+		lbUnsavedWarning.visibleProperty().bind(savedProperty.not());
 		setOnCloseRequest(e -> {
 			if (realTimeSimulator.isRunning())
 				stopSimulator(realTimeSimulator);
@@ -592,6 +650,7 @@ public final class SimulatorStage extends Stage {
 		if (!realTimeSimulator.isRunning()) {
 			if(this.time == 0) {
 				this.schedulingItems.getItems().clear();
+				this.schedulingFutureItems.getItems().clear();
 			}
 			runSimulator(realTimeSimulator);
 		} else {
@@ -660,10 +719,9 @@ public final class SimulatorStage extends Stage {
 			Path resolvedPath = currentProject.getLocation().relativize(path);
 			SimulationModel simulationModel = new SimulationModel(resolvedPath);
 			if(!currentProject.getCurrentMachine().getSimulations().contains(simulationModel)) {
-				currentProject.getCurrentMachine().getSimulations().add(new SimulationModel(resolvedPath));
-			} else {
-				cbSimulation.getSelectionModel().select(simulationModel);
+				currentProject.getCurrentMachine().getSimulations().add(simulationModel);
 			}
+			cbSimulation.getSelectionModel().select(simulationModel);
 		}
 	}
 
@@ -696,6 +754,8 @@ public final class SimulatorStage extends Stage {
 		lbTime.setText(i18n.translate("simulation.label.noSimulation"));
 		this.time = 0;
 		this.schedulingItems.getItems().clear();
+		this.schedulingFutureItems.getItems().clear();
+		this.cbTimestampsForLogging.getItems().clear();
 		realTimeSimulator.resetSimulator();
 	}
 
@@ -712,6 +772,7 @@ public final class SimulatorStage extends Stage {
 
 		simulationDiagramItems.getItems().clear();
 		simulationDiagramItems.setItems(observableList);
+		savedProperty.set(true);
 	}
 
 	@FXML
@@ -929,7 +990,7 @@ public final class SimulatorStage extends Stage {
 	private void addDirectActivation() {
 		simulationDiagramItems.getItems().add(new ActivationOperationConfiguration(
 				i18n.translate("simulation.item.newDirectActivation"),
-				"Event",
+				Arrays.asList("Event"),
 				"0",
 				0,
 				null,
@@ -941,6 +1002,7 @@ public final class SimulatorStage extends Stage {
 				true,
 				null,
 				null,
+				false,
 				""
 		));
 	}
@@ -1039,6 +1101,7 @@ public final class SimulatorStage extends Stage {
 		uiInteractionHandler.reset();
 		this.loadSimulationIntoSimulator(simulationModel);
 		uiInteractionHandler.loadUIListenersIntoSimulator(realTimeSimulator);
+		savedProperty.set(true);
 	}
 
 	public int getTime() {

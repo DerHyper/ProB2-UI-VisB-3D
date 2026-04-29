@@ -155,7 +155,9 @@ public class DiagramGenerator {
 					eventColour = "aqua";
 				}
 				if (!activation.getId().equals("$setup_constants")) {
-					diaNode.add(new DiagramNode(opConfig.getExecute()+"_event", eventColour, opConfig.getExecute(), "ellipse"));
+					for(String execute : opConfig.getExecute()) {
+						diaNode.add(new DiagramNode(execute + "_event", eventColour, execute, "ellipse"));
+					}
 				}
 				
 				if(!activation.getId().equals("$initialise_machine") && !activation.getId().equals("$setup_constants")){
@@ -188,9 +190,13 @@ public class DiagramGenerator {
 				//Discard static events mark differentiate events and OperationConfigurations
 				if (!activation.getId().equals("$setup_constants")) {
 					if (opConfig.getWithPredicate() == null) {
-						diaNode.add(new DiagramNode(opConfig.getExecute()+"_event","white",opConfig.getExecute(), "ellipse"));
+						for(String execute : opConfig.getExecute()) {
+							diaNode.add(new DiagramNode(execute + "_event", "white",execute, "ellipse"));
+						}
 					} else {
-						diaNode.add(new ComplexListener(opConfig.getExecute()+"_event", "white", opConfig.getExecute(), "ellipse", opConfig.getWithPredicate()));
+						for(String execute : opConfig.getExecute()) {
+							diaNode.add(new ComplexListener(execute + "_event", "white",execute, "ellipse", opConfig.getWithPredicate()));
+						}
 					}
 				}
 				if(!activation.getId().equals("$initialise_machine") && !activation.getId().equals("$setup_constants")){
@@ -238,29 +244,33 @@ public class DiagramGenerator {
 			} else {
 				opConfig = (ActivationOperationConfiguration) activation;
 				if(!activation.getId().equals("$initialise_machine")){
-					edge = new DiagramEdge(opConfig.getId(), Collections.singletonList(opConfig.getExecute()+"_event"), Collections.singletonList(opConfig.getAfter()), "");
-					activating.add(edge);
+					for(String op : opConfig.getExecute()) {
+						edge = new DiagramEdge(opConfig.getId(), Collections.singletonList(op + "_event"), Collections.singletonList(opConfig.getAfter()), "");
+						activating.add(edge);
+					}
 				}
 				if (opConfig.getActivating() != null) {
-					edge = new DiagramEdge(opConfig.getExecute()+"_event", new ArrayList<>(opConfig.getActivating()), opConfig.getActivating().stream().map(n -> "Activating").collect(Collectors.toList()), "");
-					boolean isPresent = false;
+					for(String op : opConfig.getExecute()) {
+						edge = new DiagramEdge(op + "_event", new ArrayList<>(opConfig.getActivating()), opConfig.getActivating().stream().map(n -> "Activating").collect(Collectors.toList()), "");
+						boolean isPresent = false;
 
-					//If EdgeObject is already present: Add edges from new edge to old edge if applicable, then discard new object
-					for (DiagramEdge compareEdge : activating) {
-						if (compareEdge.getFrom().equals(edge.getFrom())) {
-							if(edge.getTo() != null && compareEdge.getTo() != null) {
-								edge.getTo().stream().filter(Objects::nonNull).forEach(x -> {
-									if (!compareEdge.getTo().contains(x)) {
-										compareEdge.getTo().add(x);
-										compareEdge.getEdgeLabel().add("activating");
-									}
-								});
+						//If EdgeObject is already present: Add edges from new edge to old edge if applicable, then discard new object
+						for (DiagramEdge compareEdge : activating) {
+							if (compareEdge.getFrom().equals(edge.getFrom())) {
+								if (edge.getTo() != null && compareEdge.getTo() != null) {
+									edge.getTo().stream().filter(Objects::nonNull).forEach(x -> {
+										if (!compareEdge.getTo().contains(x)) {
+											compareEdge.getTo().add(x);
+											compareEdge.getEdgeLabel().add("activating");
+										}
+									});
+								}
+								isPresent = true;
 							}
-							isPresent = true;
 						}
-					}
-					if (!isPresent) {
-						activating.add(edge);
+						if (!isPresent) {
+							activating.add(edge);
+						}
 					}
 				}
 				

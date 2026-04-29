@@ -1,6 +1,7 @@
 package de.prob2.ui.simulation.simulators;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -44,10 +45,16 @@ public class SimulationCreator {
 			State destination = transition.getDestination();
 			Map<String, String> fixedVariables = !Transition.SETUP_CONSTANTS_NAME.equals(op) ? createFixedVariables(computeFixedVariablesFromDestinationValues(destination.getVariableValues(FormulaExpand.EXPAND)), opInfo) :
 					createFixedVariables(computeFixedVariablesFromDestinationValues(destination.getConstantValues(FormulaExpand.EXPAND)), opInfo);
-			fixedVariables = fixedVariables == null || fixedVariables.isEmpty() ? null : fixedVariables;
+			List<String> parameterNames = transition.getParameterNames();
+			List<String> parameterValues = transition.getParameterValues();
+			fixedVariables = fixedVariables == null ? new HashMap<>() : fixedVariables;
+			for(int k = 0; k < parameterNames.size(); k++) {
+				fixedVariables.put(parameterNames.get(k), parameterValues.get(k));
+			}
+			fixedVariables = fixedVariables.isEmpty() ? null : fixedVariables;
 
 			List<String> activations = Transition.SETUP_CONSTANTS_NAME.equals(op) || nextOp == null ? null : Collections.singletonList(nextOp);
-			ActivationOperationConfiguration activationConfig = new ActivationOperationConfiguration(id, op, String.valueOf(time), 0, forSave ? null : "1=1", forSave ? null : ActivationKind.MULTI, fixedVariables, null, TransitionSelection.FIRST, activations, true, null, null, "");
+			ActivationOperationConfiguration activationConfig = new ActivationOperationConfiguration(id, Arrays.asList(op), String.valueOf(time), 0, forSave ? null : "1=1", forSave ? null : ActivationKind.MULTI, fixedVariables, null, TransitionSelection.FIRST, activations, true, null, null, true, "");
 			activationConfigurations.add(activationConfig);
 			currentTimestamp = timestamps.get(i);
 		}

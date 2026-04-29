@@ -42,6 +42,15 @@
 				</Button>
 			</InterruptIfRunningButton>
 			<Spacer/>
+			<Button fx:id="statisticsButton" onAction="#showStatisticsOverTraces">
+				<graphic>
+					<BindableGlyph styleClass="icon-dark" fontFamily="FontAwesome" icon="INFO_CIRCLE"
+								   bindableFontSize="${fontSize.fontSize * 2}"/>
+				</graphic>
+				<tooltip>
+					<Tooltip text="Evaluate Statistics"/>
+				</tooltip>
+			</Button>
 			<MenuButton fx:id="loadTraceButton">
 				<graphic>
 					<BindableGlyph styleClass="icon-dark" fontFamily="FontAwesome" icon="FOLDER_OPEN"
@@ -73,7 +82,7 @@
 								 minWidth="${fontSize.fontSize * 2}" maxWidth="${fontSize.fontSize * 2}"/>
 					<TableColumn fx:id="statusColumn" style="-fx-alignment: CENTER;" minWidth="${fontSize.fontSize * 6}"
 								 maxWidth="${fontSize.fontSize * 6}" text="%common.columns.status"/>
-					<TableColumn fx:id="configurationColumn" text="%animation.tracereplay.view.columns.name"/>
+					<TableColumn fx:id="configurationColumn" text="%common.columns.name"/>
 					<TableColumn fx:id="stepsColumn" minWidth="${fontSize.fontSize * 5}"
 								 maxWidth="${fontSize.fontSize * 5}" text="%animation.tracereplay.view.columns.steps"/>
 				</columns>

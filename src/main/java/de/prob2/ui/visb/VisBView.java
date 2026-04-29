@@ -704,6 +704,9 @@ public final class VisBView extends BorderPane {
 	}
 
 	public void changeAttribute(final String id, final String attribute, final String value) {
+		if(currentTrace.getCurrentState() == null) {
+			return;
+		}
 		if (loadingStatus.get() != VisBView.LoadingStatus.LOADED) {
 			throw new IllegalStateException("Tried to call changeAttribute before VisB visualisation has been fully loaded");
 		}
@@ -976,7 +979,7 @@ public final class VisBView extends BorderPane {
 
 	private Path showHtmlExportFileChooser() {
 		final FileChooser fileChooser = new FileChooser();
-		FileChooser.ExtensionFilter htmlFilter = fileChooserManager.getExtensionFilter("common.fileChooser.fileTypes.html", "html");
+		FileChooser.ExtensionFilter htmlFilter = fileChooserManager.getHtmlFilter();
 		fileChooser.getExtensionFilters().setAll(htmlFilter);
 		fileChooser.setTitle(i18n.translate("common.fileChooser.save.title"));
 		fileChooser.setInitialFileName(currentProject.getCurrentMachine().getName());

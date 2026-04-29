@@ -28,6 +28,7 @@ import de.prob.scripting.EventBFactory;
 import de.prob.scripting.EventBPackageFactory;
 import de.prob.scripting.FactoryProvider;
 import de.prob.scripting.ModelFactory;
+import de.prob.scripting.SequentProverFactory;
 import de.prob.scripting.TLAFactory;
 import de.prob.scripting.XTLFactory;
 import de.prob.scripting.ZFactory;
@@ -47,7 +48,7 @@ import javafx.stage.Window;
 @Singleton
 public final class FileChooserManager {
 	public enum Kind {
-		PROJECTS_AND_MACHINES, NEW_MACHINE, PLUGINS, VISUALISATIONS, PERSPECTIVES, TRACES, SIMULATION, HISTORY_CHART, DATA_IMPORT
+		PROJECTS_AND_MACHINES, NEW_MACHINE, PLUGINS, VISUALISATIONS, PERSPECTIVES, TRACES, SIMULATION, HISTORY_CHART, DATA_IMPORT, TRACE_STATISTICS
 	}
 
 	public static final String EXTENSION_PATTERN_PREFIX = "*.";
@@ -62,6 +63,7 @@ public final class FileChooserManager {
 		map.put(TLAFactory.class, "common.fileChooser.fileTypes.tla");
 		map.put(RulesModelFactory.class, "common.fileChooser.fileTypes.bRules");
 		map.put(XTLFactory.class, "common.fileChooser.fileTypes.xtl");
+		map.put(SequentProverFactory.class, "common.fileChooser.fileTypes.probpo");
 		map.put(ZFactory.class, "common.fileChooser.fileTypes.z");
 		map.put(ZFuzzFactory.class, "common.fileChooser.fileTypes.zFuzz");
 		map.put(AlloyFactory.class, "common.fileChooser.fileTypes.alloy");
@@ -209,6 +211,10 @@ public final class FileChooserManager {
 	
 	public FileChooser.ExtensionFilter getCsvFilter() {
 		return this.getExtensionFilter("common.fileChooser.fileTypes.csv", "csv");
+	}
+
+	public FileChooser.ExtensionFilter getHtmlFilter() {
+		return this.getExtensionFilter("common.fileChooser.fileTypes.html", "html");
 	}
 	
 	public FileChooser.ExtensionFilter getSvgFilter() {

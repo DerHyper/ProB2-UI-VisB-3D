@@ -504,7 +504,7 @@ public final class VisBView extends BorderPane {
 
 	private void loadVisualisationIntoWebView(VisBVisualisation visBVisualisation) {
 		if (visBVisualisation instanceof VisB3DVisualisation) {
-			this.openVisB3DBrowser();
+			this.initVisB3D();
 		}
 
 		final Path path = visBVisualisation.getSvgPath();
@@ -792,7 +792,7 @@ public final class VisBView extends BorderPane {
 	}
 
 	
-	private void openVisB3DBrowser() {
+	private void initVisB3D() {
 		VisB3DMessageHandler messageHandler = new VisB3DMessageHandler(visBConnector);
 		VisBWebSocketServer.startServerThread(messageHandler);
 		VisBHttpServer.startHTTPServer();

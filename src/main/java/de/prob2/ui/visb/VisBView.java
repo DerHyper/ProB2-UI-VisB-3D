@@ -59,6 +59,8 @@ import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.visb.help.UserManualStage;
 import de.prob2.ui.visb.visb3d.VisB3DDto;
 import de.prob2.ui.visb.visb3d.VisB3DMessageHandler;
+import de.prob2.ui.visb.visb3d.cad.convert.CadConverterRegistry;
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionUtils;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -796,17 +798,45 @@ public final class VisBView extends BorderPane {
 		VisB3DMessageHandler messageHandler = new VisB3DMessageHandler(visBConnector);
 		VisBWebSocketServer.startServerThread(messageHandler);
 		VisBHttpServer.startHTTPServer();
-		VisBHttpServer.sendGlbData(visBController.getVisBVisualisation().getSvgPath());
+
+		Path glbPath = convertVisBVisualisationToGlb();
+
+		VisBHttpServer.sendGlbData(glbPath);
 		VisBWebSocketServer.setInitMessage(VisBHttpServer.getGlbDataUri());
 
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
 			try {
-				Desktop.getDesktop().browse(new URI("http://localhost:"+VisBHttpServer.PORT+"/"));
+				Desktop.getDesktop().browse(new URI("http://localhost:" + VisBHttpServer.PORT + "/"));
 			} catch (IOException | URISyntaxException e) {
 				// This should never happen.
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	private Path convertVisBVisualisationToGlb()
+	{
+		Path originalFile = visBController.getVisBVisualisation().getSvgPath();
+		if (ConversionUtils.extractExtension(originalFile).equals("glb"))
+		{
+			return originalFile;
+		}
+
+		Path outputDir = null;
+		try {
+			outputDir = Files.createTempDirectory("visb-glb");
+		} catch (Exception e) {
+			LOGGER.error("Error while creating TempDirectory", e);
+		}
+
+		Path glbPath = null;
+		try {
+			glbPath = new CadConverterRegistry().convert(originalFile, outputDir);
+		} catch (IOException e) {
+			LOGGER.error("Error while converting" + originalFile.getFileName().toString() + "to GLB file format", e);
+		}
+		
+		return glbPath;
 	}
 
 	@FXML

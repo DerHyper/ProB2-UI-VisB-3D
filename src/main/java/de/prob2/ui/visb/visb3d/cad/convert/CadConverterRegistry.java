@@ -36,14 +36,29 @@ public final class CadConverterRegistry {
 	 */
 	public Path convert(Path inputFile, Path outputDirectory) throws IOException {
 		String extension = extractExtension(inputFile);
- 
+
 		for (CadToGlbConverter converter : converters) {
 			if (converter.supports(extension)) {
 				return converter.convert(inputFile, outputDirectory);
 			}
 		}
 		throw new UnsupportedOperationException(
-			"No converter currently exists for ." + extension + " files. (File: " + inputFile + ")");
+				"No converter currently exists for ." + extension + " files. (File: " + inputFile + ")");
+	}
+	
+	public List<String> getSupportedFileExtensions()
+	{
+		List<String> supportedExtensions = new ArrayList<>();
+
+		for (CadToGlbConverter converter : converters) {
+			List<String> converterExtensions = converter.supportedFileExtensions();
+			if (converterExtensions.isEmpty()) {
+				continue;
+			}
+			supportedExtensions.addAll(converterExtensions);
+		}
+
+		return supportedExtensions;
 	}
  
 	private static String extractExtension(Path file) {

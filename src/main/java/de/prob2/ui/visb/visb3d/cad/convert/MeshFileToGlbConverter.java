@@ -2,7 +2,9 @@ package de.prob2.ui.visb.visb3d.cad.convert;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -70,5 +72,10 @@ public final class MeshFileToGlbConverter implements CadToGlbConverter {
 	private static String stripExtension(String fileName) {
 		int dotIndex = fileName.lastIndexOf('.');
 		return dotIndex < 0 ? fileName : fileName.substring(0, dotIndex);
+	}
+
+	@Override
+	public List<String> supportedFileExtensions() {
+		return new ArrayList<>(parsersByExtension.keySet());
 	}
 }

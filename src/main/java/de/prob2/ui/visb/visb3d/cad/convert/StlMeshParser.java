@@ -14,14 +14,15 @@ import java.util.StringTokenizer;
 /**
  * Reads a STL file and returns a {@link TriangleMeshData}.
  */
-final class StlParser implements CadParser {
+final class StlMeshParser implements MeshParser {
 
 	/**
 	 * Reads a STL file and returns a {@link TriangleMeshData}. 
 	 * Currently no vertex welding, every vertex of a polygon is saved.
 	 * This needs more memory.
 	 */
-	static TriangleMeshData parse(Path file) throws IOException {
+	@Override
+	public TriangleMeshData parse(Path file) throws IOException {
 		byte[] bytes = Files.readAllBytes(file);
 		if (isBinaryStl(bytes)) {
 			return parseBinary(bytes);
@@ -116,9 +117,9 @@ final class StlParser implements CadParser {
 			} else if (line.startsWith("vertex")) {
 				StringTokenizer tok = new StringTokenizer(line);
 				tok.nextToken(); // "vertex"
-				positionList.add(Float.parseFloat(tok.nextToken()));
-				positionList.add(Float.parseFloat(tok.nextToken()));
-				positionList.add(Float.parseFloat(tok.nextToken()));
+				positionList.add(Float.valueOf(tok.nextToken()));
+				positionList.add(Float.valueOf(tok.nextToken()));
+				positionList.add(Float.valueOf(tok.nextToken()));
 				normalList.add(currentNx);
 				normalList.add(currentNy);
 				normalList.add(currentNz);

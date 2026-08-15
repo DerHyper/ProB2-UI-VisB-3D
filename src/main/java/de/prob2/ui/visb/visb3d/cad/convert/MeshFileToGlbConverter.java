@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -40,7 +39,7 @@ public final class MeshFileToGlbConverter implements CadToGlbConverter {
 
 	@Override
 	public Path convert(Path inputFile, Path outputDirectory) throws IOException {
-		String extension = extractExtension(inputFile);
+		String extension = ConversionUtils.extractExtension(inputFile);
 		MeshParser parser = parsersByExtension.get(extension);
 		if (parser == null) {
 			throw new IllegalArgumentException(
@@ -49,29 +48,10 @@ public final class MeshFileToGlbConverter implements CadToGlbConverter {
 
 		TriangleMeshData mesh = parser.parse(inputFile);
 
-		String baseName = stripExtension(inputFile.getFileName().toString());
+		String baseName = ConversionUtils.stripExtension(inputFile.getFileName().toString());
 		Path outputFile = outputDirectory.resolve(baseName + ".glb");
 		GlbBuilder.writeGlb(mesh, outputFile);
 		return outputFile;
-	}
-
-	/**
-	 * @param file Path to a file (e.g. "C:\Models\MyModel.stl")
-	 * @return File extention (e.g. "stl")
-	 */
-	private static String extractExtension(Path file) {
-		String name = file.getFileName().toString();
-		int dot = name.lastIndexOf('.');
-		return dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
-	}
-
-	/**
-	 * @param fileName Name of file (e.g. "MyModel.stl")
-	 * @return Name of file without extension (e.g. "MyModel")
-	 */
-	private static String stripExtension(String fileName) {
-		int dotIndex = fileName.lastIndexOf('.');
-		return dotIndex < 0 ? fileName : fileName.substring(0, dotIndex);
 	}
 
 	@Override

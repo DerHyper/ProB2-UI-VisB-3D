@@ -34,11 +34,11 @@ import de.prob.scripting.XTLFactory;
 import de.prob.scripting.ZFactory;
 import de.prob.scripting.ZFuzzFactory;
 import de.prob2.ui.animation.tracereplay.TraceFileHandler;
+import de.prob2.ui.config.nativecadimport.NativeCadFactory;
 import de.prob2.ui.internal.I18n;
 import de.prob2.ui.internal.StageManager;
 import de.prob2.ui.project.ProjectManager;
 import de.prob2.ui.simulation.configuration.SimulationFileHandler;
-
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.DirectoryChooser;
@@ -67,6 +67,7 @@ public final class FileChooserManager {
 		map.put(ZFactory.class, "common.fileChooser.fileTypes.z");
 		map.put(ZFuzzFactory.class, "common.fileChooser.fileTypes.zFuzz");
 		map.put(AlloyFactory.class, "common.fileChooser.fileTypes.alloy");
+		map.put(NativeCadFactory.class, "common.fileChooser.fileTypes.nativeCad");
 		FACTORY_TO_TYPE_KEY_MAP = Map.copyOf(map);
 
 		// Remove unsupported file types for creating new machines

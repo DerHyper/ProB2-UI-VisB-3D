@@ -17,6 +17,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -39,12 +42,11 @@ import de.prob2.ui.animation.symbolic.testcasegeneration.TestCaseGenerationItem;
 import de.prob2.ui.animation.tracereplay.ReplayTrace;
 import de.prob2.ui.animation.tracereplay.statistics.TraceStatisticsFormulasItem;
 import de.prob2.ui.chart.ChartFormulaTask;
-import de.prob2.ui.config.nativecadimport.NativeCadFactory;
 import de.prob2.ui.dynamic.VisualizationFormulaTask;
 import de.prob2.ui.internal.CachedEditorState;
 import de.prob2.ui.project.preferences.Preference;
-import de.prob2.ui.simulation.model.SimulationModel;
 import de.prob2.ui.simulation.SimulationItem;
+import de.prob2.ui.simulation.model.SimulationModel;
 import de.prob2.ui.verifications.IValidationTask;
 import de.prob2.ui.verifications.modelchecking.ModelCheckingItem;
 import de.prob2.ui.verifications.po.ProofObligationItem;
@@ -53,7 +55,6 @@ import de.prob2.ui.verifications.temporal.TemporalFormulaItem;
 import de.prob2.ui.verifications.temporal.ltl.patterns.LTLPatternItem;
 import de.prob2.ui.verifications.temporal.ltl.patterns.LTLPatternParser;
 import de.prob2.ui.verifications.type.BuiltinValidationTaskTypes;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ListProperty;
@@ -67,9 +68,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @JsonPropertyOrder({
 	"name",
@@ -179,12 +177,7 @@ public final class Machine {
 
 	@JsonIgnore
 	public Class<? extends ModelFactory<?>> getModelFactoryClass() {
-		// TODO: Exchange for ProB Kernel implementation
-		try {
-			return FactoryProvider.factoryClassFromExtension(MoreFiles.getFileExtension(this.getLocation()));
-		} catch (Exception e) {
-			return NativeCadFactory.class;
-		}
+		return FactoryProvider.factoryClassFromExtension(MoreFiles.getFileExtension(this.getLocation()));
 	}
 
 	public StringProperty lastUsedPreferenceNameProperty() {

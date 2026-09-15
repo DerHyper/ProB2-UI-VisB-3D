@@ -1,5 +1,9 @@
 package de.prob2.ui.config.nativecadimport;
 
+/**
+ * Internal representation of a joint from a native CAD format.
+ * Variables can be null if not used by a CAD format.
+ */
 public class CadJoint {
 
     private Float angle;

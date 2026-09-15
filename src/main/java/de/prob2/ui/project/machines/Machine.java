@@ -39,6 +39,7 @@ import de.prob2.ui.animation.symbolic.testcasegeneration.TestCaseGenerationItem;
 import de.prob2.ui.animation.tracereplay.ReplayTrace;
 import de.prob2.ui.animation.tracereplay.statistics.TraceStatisticsFormulasItem;
 import de.prob2.ui.chart.ChartFormulaTask;
+import de.prob2.ui.config.nativecadimport.NativeCadFactory;
 import de.prob2.ui.dynamic.VisualizationFormulaTask;
 import de.prob2.ui.internal.CachedEditorState;
 import de.prob2.ui.project.preferences.Preference;
@@ -178,7 +179,12 @@ public final class Machine {
 
 	@JsonIgnore
 	public Class<? extends ModelFactory<?>> getModelFactoryClass() {
-		return FactoryProvider.factoryClassFromExtension(MoreFiles.getFileExtension(this.getLocation()));
+		// TODO: Exchange for ProB Kernel implementation
+		try {
+			return FactoryProvider.factoryClassFromExtension(MoreFiles.getFileExtension(this.getLocation()));
+		} catch (Exception e) {
+			return NativeCadFactory.class;
+		}
 	}
 
 	public StringProperty lastUsedPreferenceNameProperty() {

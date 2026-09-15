@@ -96,7 +96,13 @@ public final class FileChooserManager {
 			.map(ext -> EXTENSION_PATTERN_PREFIX + ext)
 			.collect(Collectors.toList());
 		this.machineExtensionFilters = new ArrayList<>();
-		FactoryProvider.FACTORY_TO_EXTENSIONS_MAP.forEach((factory, extensions) -> {
+		
+		// TODO: Exchange for ProB Kernel implementation
+		Map<Class<? extends ModelFactory<?>>, List<String>> FACTORY_TO_EXTENSIONS_INCLUDING_FCSTD = new HashMap<>();
+		FACTORY_TO_EXTENSIONS_INCLUDING_FCSTD.putAll(FactoryProvider.FACTORY_TO_EXTENSIONS_MAP);
+		FACTORY_TO_EXTENSIONS_INCLUDING_FCSTD.putAll(Map.of(NativeCadFactory.class, Arrays.asList("FCStd", "fcstd")));
+		// FactoryProvider.FACTORY_TO_EXTENSIONS_MAP.forEach((factory, extensions) -> {
+		FACTORY_TO_EXTENSIONS_INCLUDING_FCSTD.forEach((factory, extensions) -> {
 			final String name;
 			if (FACTORY_TO_TYPE_KEY_MAP.containsKey(factory)) {
 				name = i18n.translate(FACTORY_TO_TYPE_KEY_MAP.get(factory));

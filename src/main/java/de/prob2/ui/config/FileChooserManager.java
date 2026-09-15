@@ -34,7 +34,6 @@ import de.prob.scripting.XTLFactory;
 import de.prob.scripting.ZFactory;
 import de.prob.scripting.ZFuzzFactory;
 import de.prob2.ui.animation.tracereplay.TraceFileHandler;
-import de.prob2.ui.config.nativecadimport.NativeCadFactory;
 import de.prob2.ui.internal.I18n;
 import de.prob2.ui.internal.StageManager;
 import de.prob2.ui.project.ProjectManager;
@@ -67,7 +66,6 @@ public final class FileChooserManager {
 		map.put(ZFactory.class, "common.fileChooser.fileTypes.z");
 		map.put(ZFuzzFactory.class, "common.fileChooser.fileTypes.zFuzz");
 		map.put(AlloyFactory.class, "common.fileChooser.fileTypes.alloy");
-		map.put(NativeCadFactory.class, "common.fileChooser.fileTypes.nativeCad");
 		FACTORY_TO_TYPE_KEY_MAP = Map.copyOf(map);
 
 		// Remove unsupported file types for creating new machines
@@ -97,12 +95,7 @@ public final class FileChooserManager {
 			.collect(Collectors.toList());
 		this.machineExtensionFilters = new ArrayList<>();
 		
-		// TODO: Exchange for ProB Kernel implementation
-		Map<Class<? extends ModelFactory<?>>, List<String>> FACTORY_TO_EXTENSIONS_INCLUDING_FCSTD = new HashMap<>();
-		FACTORY_TO_EXTENSIONS_INCLUDING_FCSTD.putAll(FactoryProvider.FACTORY_TO_EXTENSIONS_MAP);
-		FACTORY_TO_EXTENSIONS_INCLUDING_FCSTD.putAll(Map.of(NativeCadFactory.class, Arrays.asList("FCStd", "fcstd")));
-		// FactoryProvider.FACTORY_TO_EXTENSIONS_MAP.forEach((factory, extensions) -> {
-		FACTORY_TO_EXTENSIONS_INCLUDING_FCSTD.forEach((factory, extensions) -> {
+		FactoryProvider.FACTORY_TO_EXTENSIONS_MAP.forEach((factory, extensions) -> {
 			final String name;
 			if (FACTORY_TO_TYPE_KEY_MAP.containsKey(factory)) {
 				name = i18n.translate(FACTORY_TO_TYPE_KEY_MAP.get(factory));

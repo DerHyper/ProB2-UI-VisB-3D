@@ -21,6 +21,11 @@ import de.prob.scripting.FactoryProvider;
 import de.prob.scripting.ModelFactory;
 import de.prob.statespace.StateSpace;
 
+/**
+ * NativeCadFactory is a factory that creates ClassicalBModels from native CAD files (e.g. FreeCAD files).
+ * It does this by using a NativeCad2BParser to parse the native CAD file into a temporary classical B .mch file, 
+ * and then using a ClassicalBFactory to create the ClassicalBModel from that temporary file.
+ */
 public class NativeCadFactory implements ModelFactory<ClassicalBModel> {
 
     private static final Map<String, NativeCad2BParser> EXTENSION_TO_PARSER;

@@ -1,4 +1,4 @@
-package de.prob2.ui.config.nativecadimport;
+package de.prob2.ui.dataimport.nativecadimport;
 
 import java.io.File;
 import java.io.IOException;

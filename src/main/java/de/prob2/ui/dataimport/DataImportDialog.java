@@ -24,6 +24,7 @@ import java.util.Optional;
 public class DataImportDialog extends Stage {
 	public enum ImportType {
 		CSV("CSV"),
+		CAD("CAD"),
 		JSON("JSON"),
 		XML("XML");
 

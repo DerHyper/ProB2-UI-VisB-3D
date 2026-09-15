@@ -1,4 +1,4 @@
-package de.prob2.ui.config.nativecadimport;
+package de.prob2.ui.dataimport.nativecadimport;
 
 /**
  * Internal representation of a joint from a native CAD format.

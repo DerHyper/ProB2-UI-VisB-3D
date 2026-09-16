@@ -7,6 +7,7 @@ import com.google.inject.Singleton;
 import de.prob2.ui.animation.tracereplay.interactive.InteractiveTraceReplayView;
 import de.prob2.ui.animation.tracereplay.refactoring.RefactorSetupView;
 import de.prob2.ui.consoles.groovy.GroovyConsoleStage;
+import de.prob2.ui.dataimport.CADDataImportDialog;
 import de.prob2.ui.dataimport.CSVDataImportDialog;
 import de.prob2.ui.dataimport.JSONDataImportDialog;
 import de.prob2.ui.dataimport.RailML2BDataImportDialog;
@@ -19,7 +20,6 @@ import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.simulation.SimulatorStage;
 import de.prob2.ui.vomanager.VOManagerStage;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
@@ -114,6 +114,11 @@ public final class AdvancedMenu extends Menu {
 		RailML2BDataImportDialog dialog = injector.getInstance(RailML2BDataImportDialog.class);
 		dialog.show();
 		dialog.toFront();
+	}
+
+	@FXML
+	private void showCADImport() {
+		injector.getInstance(CADDataImportDialog.class).showAndWait();
 	}
 
 	@FXML

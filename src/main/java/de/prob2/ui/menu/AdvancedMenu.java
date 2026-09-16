@@ -1,5 +1,8 @@
 package de.prob2.ui.menu;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
@@ -7,6 +10,7 @@ import com.google.inject.Singleton;
 import de.prob2.ui.animation.tracereplay.interactive.InteractiveTraceReplayView;
 import de.prob2.ui.animation.tracereplay.refactoring.RefactorSetupView;
 import de.prob2.ui.consoles.groovy.GroovyConsoleStage;
+import de.prob2.ui.dataimport.CADDataImportDialog;
 import de.prob2.ui.dataimport.CSVDataImportDialog;
 import de.prob2.ui.dataimport.JSONDataImportDialog;
 import de.prob2.ui.dataimport.XML2BDataImportDialog;
@@ -20,16 +24,12 @@ import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.simulation.SimulatorStage;
 import de.prob2.ui.visualisation.fx.VisualisationController;
 import de.prob2.ui.vomanager.VOManagerStage;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @FXMLInjected
 @Singleton
@@ -154,6 +154,11 @@ public final class AdvancedMenu extends Menu {
 	@FXML
 	private void showCSVImport() {
 		injector.getInstance(CSVDataImportDialog.class).showAndWait();
+	}
+
+	@FXML
+	private void showCADImport() {
+		injector.getInstance(CADDataImportDialog.class).showAndWait();
 	}
 
 	@FXML

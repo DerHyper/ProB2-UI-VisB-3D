@@ -1,7 +1,7 @@
 package de.prob2.ui.dataimport.nativecadimport;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * This Class is a parser that parses the joint information of FreeCAD files.
@@ -9,12 +9,12 @@ import java.io.IOException;
 public class FreeCad2BParser implements NativeCad2BParser {
     public static final String NATIVE_CAD_FREECAD_EXTENSION = "FCStd";
     @Override
-    public CadJointData parseFromFile(String cadFilePath) throws IOException {
+    public CadJointData parseFromFile(Path cadFilePath) throws IOException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'parseFromFile'");
     }
     @Override
-    public File parseIntoBMachine(CadJointData joints) throws IOException {
+    public String parseIntoBMachine(CadJointData joints) throws IOException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'parseIntoBMachine'");
     }

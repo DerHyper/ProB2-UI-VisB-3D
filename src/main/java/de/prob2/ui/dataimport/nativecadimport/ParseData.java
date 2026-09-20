@@ -5,11 +5,11 @@ import java.util.List;
 /**
  * Represents the joint data parsed from a CAD file.
  */
-public class CadJointData {
+public class ParseData {
 
     private List<CadJoint> cadJoints;
 
-    public CadJointData(List<CadJoint> cadJoints) {
+    public ParseData(List<CadJoint> cadJoints) {
         this.cadJoints = cadJoints;
     }
 

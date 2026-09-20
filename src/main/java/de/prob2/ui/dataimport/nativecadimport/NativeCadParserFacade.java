@@ -12,7 +12,6 @@ import com.google.common.io.MoreFiles;
 /**
  * NativeCadParserWrapper is a facade that helps when parsing from native CAD files (e.g. FreeCAD files) 
  * into formal model machines (like classical B .mch).
- * It does this by using a NativeCad2BParser to parse the native CAD file into a  file.
  */
 public class NativeCadParserFacade {
 
@@ -33,7 +32,7 @@ public class NativeCadParserFacade {
                     "No Parser for file extension found: " + extension);
         }
 
-        CadJointData cadJointData = parser.parseFromFile(modelPath);
+        ParseData cadJointData = parser.parseFromFile(modelPath);
         String bMachine = parser.parseIntoBMachine(cadJointData);
 
         return bMachine;

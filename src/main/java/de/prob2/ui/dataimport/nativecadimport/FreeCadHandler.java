@@ -18,7 +18,7 @@ public class FreeCadHandler extends DefaultHandler {
     private static final String SUB = "Sub";
     
 
-    private CadJointData jointData;
+    private ParseData parseData;
     private CadJoint currentJoint;
     private StringBuilder elementValue;
 }

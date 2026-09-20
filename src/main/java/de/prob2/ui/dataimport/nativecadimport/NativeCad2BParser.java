@@ -1,6 +1,5 @@
 package de.prob2.ui.dataimport.nativecadimport;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -18,10 +17,10 @@ public interface NativeCad2BParser {
      * (like STL or OBJ) or are capable of storing joint information but are generally not implemented 
      * to do so (like STEP).
      */
-    public CadJointData parseFromFile(Path cadFilePath) throws IOException;
+    public ParseData parseFromFile(Path cadFilePath) throws IOException;
     
     /**
-     * Parses the internal representation of joint information into a temporary classical B machine file.
+     * Parses the internal cad data into a temporary classical B machine file.
      */
-    public String parseIntoBMachine(CadJointData joints) throws IOException;
+    public String parseIntoBMachine(ParseData joints) throws IOException;
 }

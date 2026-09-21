@@ -1,5 +1,10 @@
 package de.prob2.ui.dataimport.nativecadimport;
 
+import java.util.Map;
+import java.util.function.Consumer;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class FreeCadHandler extends DefaultHandler {
@@ -38,4 +43,65 @@ public class FreeCadHandler extends DefaultHandler {
     private ParseData parseData = new ParseData();
     private CadJoint currentJoint;
     private StringBuilder elementValue;
+    private String currentProperty;
+
+    private final Map<String, Consumer<Object>> handlers =
+        Map.<String, Consumer<Object>>of(
+            "Angle",   value -> currentJoint.setAngle((Float) value)
+        );
+
+    @Override
+    public void characters(char[] ch, int start, int length) throws SAXException {
+        if (elementValue == null) {
+            elementValue = new StringBuilder();
+        } else {
+            elementValue.append(ch, start, length);
+        }
+    }
+
+    @Override
+    public void startDocument() throws SAXException {
+        parseData = new ParseData();
+    }
+
+    @Override
+    public void startElement(String uri, String lName, String qName, Attributes attr) throws SAXException {
+        switch (qName) {
+            case OBJECT -> handleStartObject(attr);
+            case PROPERTY -> handleStartProperty(attr);
+            case FLOAT -> handleFloat(attr);
+            default -> {}
+        }
+    }
+
+    @Override
+    public void endElement(String uri, String localName, String qName) throws SAXException {
+        switch (qName) {
+            case OBJECT -> handleEndObject();
+            default -> {}
+        }
+    }
+
+    private void handleStartObject(Attributes attr) {
+        currentJoint = new CadJoint();
+        String name = attr.getValue(NAME);
+        currentJoint.setName(name);
+    }
+
+    private void handleStartProperty(Attributes attr) {
+        currentProperty = attr.getValue(NAME);
+    }
+
+    private void handleFloat(Attributes attr) {
+        Float value = Float.valueOf(attr.getValue(VALUE));
+        Consumer<Object> handler = handlers.get(currentProperty);
+        if (handler != null)
+        {
+            handler.accept(value);
+        }
+    }
+
+    private void handleEndObject() {
+        parseData.addCadJoint(currentJoint);
+    }
 }

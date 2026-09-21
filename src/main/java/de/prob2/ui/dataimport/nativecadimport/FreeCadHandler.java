@@ -104,4 +104,8 @@ public class FreeCadHandler extends DefaultHandler {
     private void handleEndObject() {
         parseData.addCadJoint(currentJoint);
     }
+
+    public ParseData getParseData() {
+        return parseData;
+    }
 }

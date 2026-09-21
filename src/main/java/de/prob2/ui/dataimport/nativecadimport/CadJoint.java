@@ -6,6 +6,7 @@ package de.prob2.ui.dataimport.nativecadimport;
  */
 public class CadJoint {
 
+    public String name;
     private Float angle;
     private Float angleMax;
     private Float angleMin;
@@ -18,7 +19,23 @@ public class CadJoint {
     private Boolean enableLengthMin;
     private Boolean enableLengthMax;
 
+    public CadJoint() {
+        this.name = null;
+        this.angle = null;
+        this.angleMax = null;
+        this.angleMin = null;
+        this.enableAngleMin = null;
+        this.enableAngleMax = null;
+        this.distance = null;
+        this.distance2 = null;
+        this.lengthMin = null;
+        this.lengthMax = null;
+        this.enableLengthMin = null;
+        this.enableLengthMax = null;
+    }
+
     public CadJoint(
+            String name, 
             Float angle,
             Float angleMax,
             Float angleMin,
@@ -30,7 +47,8 @@ public class CadJoint {
             Float lengthMax,
             Boolean enableLengthMin,
             Boolean enableLengthMax) {
-
+        
+        this.name = name;
         this.angle = angle;
         this.angleMax = angleMax;
         this.angleMin = angleMin;
@@ -42,6 +60,14 @@ public class CadJoint {
         this.lengthMax = lengthMax;
         this.enableLengthMin = enableLengthMin;
         this.enableLengthMax = enableLengthMax;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Float getAngle() {

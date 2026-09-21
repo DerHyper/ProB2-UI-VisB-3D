@@ -1,5 +1,6 @@
 package de.prob2.ui.dataimport.nativecadimport;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -8,6 +9,10 @@ import java.util.List;
 public class ParseData {
 
     private List<CadJoint> cadJoints;
+
+    public ParseData() {
+        this.cadJoints = new ArrayList<>();
+    }
 
     public ParseData(List<CadJoint> cadJoints) {
         this.cadJoints = cadJoints;
@@ -19,5 +24,10 @@ public class ParseData {
 
     public void setCadJoints(List<CadJoint> cadJoints) {
         this.cadJoints = cadJoints;
+    }
+
+    public void addCadJoint(CadJoint cadJoint)
+    {
+        cadJoints.add(cadJoint);
     }
 }

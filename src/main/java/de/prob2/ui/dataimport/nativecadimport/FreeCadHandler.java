@@ -34,6 +34,8 @@ public class FreeCadHandler extends DefaultHandler {
     private static final String ANGLEMIN = "AngleMin";
     private static final String DISTANCE = "Distance";
     private static final String DISTANCE2 = "Distance2";
+    private static final String LENGTHMIN = "LengthMin";
+    private static final String LENGTHMAX = "LengthMax";
     private static final String ENABLEANGLEMAX = "EnableAngleMax";
     private static final String ENABLEANGLEMIN = "EnableAngleMin";
     private static final String ENABLELENGTHMAX = "EnableLengthMax";
@@ -45,10 +47,19 @@ public class FreeCadHandler extends DefaultHandler {
     private StringBuilder elementValue;
     private String currentProperty;
 
-    private final Map<String, Consumer<Object>> handlers =
-        Map.<String, Consumer<Object>>of(
-            "Angle",   value -> currentJoint.setAngle((Float) value)
-        );
+    private final Map<String, Consumer<Object>> handlers = Map.ofEntries(
+        Map.entry(ANGLE,           value -> currentJoint.setAngle((Float) value)),
+        Map.entry(ANGLEMAX,        value -> currentJoint.setAngleMax((Float) value)),
+        Map.entry(ANGLEMIN,        value -> currentJoint.setAngleMin((Float) value)),
+        Map.entry(DISTANCE,        value -> currentJoint.setDistance((Float) value)),
+        Map.entry(DISTANCE2,       value -> currentJoint.setDistance2((Float) value)),
+        Map.entry(LENGTHMIN,       value -> currentJoint.setLengthMin((Float) value)),
+        Map.entry(LENGTHMAX,       value -> currentJoint.setLengthMax((Float) value)),
+        Map.entry(ENABLEANGLEMIN,  value -> currentJoint.setEnableAngleMin((Boolean) value)),
+        Map.entry(ENABLEANGLEMAX,  value -> currentJoint.setEnableAngleMax((Boolean) value)),
+        Map.entry(ENABLELENGTHMIN, value -> currentJoint.setEnableLengthMin((Boolean) value)),
+        Map.entry(ENABLELENGTHMAX, value -> currentJoint.setEnableLengthMax((Boolean) value))
+    );
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {

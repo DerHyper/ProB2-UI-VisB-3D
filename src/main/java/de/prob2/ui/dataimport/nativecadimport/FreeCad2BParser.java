@@ -37,7 +37,9 @@ public class FreeCad2BParser implements NativeCad2BParser {
             throw new IOException("Error while parsing Document.xml in " + cadFilePath, e);
         }
 
-        return freeCadHandler.getParseData();
+        ParseData parseData = freeCadHandler.getParseData();
+        parseData.setMachineName(cadFilePath.toFile().toString());
+        return parseData;
     }
 
     @Override

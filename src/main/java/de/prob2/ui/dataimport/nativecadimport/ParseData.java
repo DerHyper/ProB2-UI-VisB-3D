@@ -9,6 +9,15 @@ import java.util.List;
 public class ParseData {
 
     private List<CadJoint> cadJoints;
+    private String machineName;
+
+    public String getMachineName() {
+        return machineName;
+    }
+
+    public void setMachineName(String machineName) {
+        this.machineName = machineName;
+    }
 
     public ParseData() {
         this.cadJoints = new ArrayList<>();

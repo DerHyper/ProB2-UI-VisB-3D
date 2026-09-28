@@ -22,7 +22,7 @@ public class FreeCadHandler extends DefaultHandler {
     private static final String PROPERTYPLACEMENT = "PropertyPlacement";
     private static final String XLINK = "XLink";
     private static final String SUB = "Sub";
-    
+
     // Attributes
     private static final String NAME = "name";
     private static final String GROUP = "group";
@@ -38,7 +38,7 @@ public class FreeCadHandler extends DefaultHandler {
     private static final String ENABLEANGLEMIN = "EnableAngleMin";
     private static final String ENABLELENGTHMAX = "EnableLengthMax";
     private static final String ENABLELENGTHMIN = "EnableLengthMin";
-    
+
     // Local variables
     private ParseData parseData = new ParseData();
     private CadJoint currentJoint;
@@ -70,6 +70,7 @@ public class FreeCadHandler extends DefaultHandler {
             case OBJECT -> handleStartObject(attr);
             case PROPERTY -> handleStartProperty(attr);
             case FLOAT -> handleFloat(attr);
+            case BOOL -> handleBool(attr);
             default -> {}
         }
     }
@@ -93,10 +94,16 @@ public class FreeCadHandler extends DefaultHandler {
     }
 
     private void handleFloat(Attributes attr) {
-        Float value = Float.valueOf(attr.getValue(VALUE));
+        dispatch(Float.valueOf(attr.getValue(VALUE)));
+    }
+
+    private void handleBool(Attributes attr) {
+        dispatch(Boolean.valueOf(attr.getValue(VALUE)));
+    }
+
+    private void dispatch(Object value) {
         Consumer<Object> handler = handlers.get(currentProperty);
-        if (handler != null)
-        {
+        if (handler != null) {
             handler.accept(value);
         }
     }

@@ -30,4 +30,15 @@ public class ParseData {
     {
         cadJoints.add(cadJoint);
     }
+
+    @Override 
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.getClass().getName()).append("{\n");
+        for (CadJoint joint : cadJoints) {
+            sb.append(joint.toString()).append("\n");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
 }

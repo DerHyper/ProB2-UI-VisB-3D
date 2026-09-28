@@ -1,5 +1,7 @@
 package de.prob2.ui.dataimport.nativecadimport;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+
 /**
  * Internal representation of a joint from a native CAD format.
  * Variables can be null if not used by a CAD format.
@@ -156,6 +158,11 @@ public class CadJoint {
 
     public void setEnableLengthMax(Boolean enableLengthMax) {
         this.enableLengthMax = enableLengthMax;
+    }
+
+    @Override 
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this);
     }
 }
 

@@ -18,9 +18,4 @@ public interface NativeCad2BParser {
      * to do so (like STEP).
      */
     public ParseData parseFromFile(Path cadFilePath) throws IOException;
-    
-    /**
-     * Parses the internal cad data into a temporary classical B machine file.
-     */
-    public String parseIntoBMachine(ParseData joints) throws IOException;
 }

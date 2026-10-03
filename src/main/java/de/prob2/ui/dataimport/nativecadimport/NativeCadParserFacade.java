@@ -8,6 +8,8 @@ import java.util.Set;
 
 import com.google.common.io.MoreFiles;
 
+import de.prob2.ui.dataimport.nativecadimport.FreeCad.FreeCad2BParser;
+
 
 /**
  * NativeCadParserWrapper is a facade that helps when parsing from native CAD files (e.g. FreeCAD files) 
@@ -33,7 +35,7 @@ public class NativeCadParserFacade {
         }
 
         ParseData cadJointData = parser.parseFromFile(modelPath);
-        String bMachine = parser.parseIntoBMachine(cadJointData);
+        String bMachine = ClassicalBGenerator.parseIntoBMachine(cadJointData);
 
         return bMachine;
     }

@@ -1,4 +1,4 @@
-package de.prob2.ui.dataimport.nativecadimport;
+package de.prob2.ui.dataimport.nativecadimport.FreeCad;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +13,9 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
+
+import de.prob2.ui.dataimport.nativecadimport.NativeCad2BParser;
+import de.prob2.ui.dataimport.nativecadimport.ParseData;
 
 /**
  * This class is a parser that extracts data (mainly joint information) from FreeCAD files.
@@ -40,12 +43,6 @@ public class FreeCad2BParser implements NativeCad2BParser {
         ParseData parseData = freeCadHandler.getParseData();
         parseData.setMachineName(cadFilePath.toFile().toString());
         return parseData;
-    }
-
-    @Override
-    public String parseIntoBMachine(ParseData joints) throws IOException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'parseIntoBMachine'");
     }
     
     private InputStream zipToDocXmlStream(Path cadFilePath) throws ZipException, IOException {

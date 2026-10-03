@@ -1,5 +1,8 @@
 package de.prob2.ui.dataimport.nativecadimport;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 /**
@@ -8,60 +11,14 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
  */
 public class CadJoint {
 
-    public String name;
-    private Float angle;
-    private Float angleMax;
-    private Float angleMin;
-    private Boolean enableAngleMin;
-    private Boolean enableAngleMax;
-    private Float distance;
-    private Float distance2;
-    private Float lengthMin;
-    private Float lengthMax;
-    private Boolean enableLengthMin;
-    private Boolean enableLengthMax;
+    private String name;
+    private String type;
+    private List<ConstrainedParameter> parameters;
 
     public CadJoint() {
         this.name = null;
-        this.angle = null;
-        this.angleMax = null;
-        this.angleMin = null;
-        this.enableAngleMin = null;
-        this.enableAngleMax = null;
-        this.distance = null;
-        this.distance2 = null;
-        this.lengthMin = null;
-        this.lengthMax = null;
-        this.enableLengthMin = null;
-        this.enableLengthMax = null;
-    }
-
-    public CadJoint(
-            String name, 
-            Float angle,
-            Float angleMax,
-            Float angleMin,
-            Boolean enableAngleMin,
-            Boolean enableAngleMax,
-            Float distance,
-            Float distance2,
-            Float lengthMin,
-            Float lengthMax,
-            Boolean enableLengthMin,
-            Boolean enableLengthMax) {
-        
-        this.name = name;
-        this.angle = angle;
-        this.angleMax = angleMax;
-        this.angleMin = angleMin;
-        this.enableAngleMin = enableAngleMin;
-        this.enableAngleMax = enableAngleMax;
-        this.distance = distance;
-        this.distance2 = distance2;
-        this.lengthMin = lengthMin;
-        this.lengthMax = lengthMax;
-        this.enableLengthMin = enableLengthMin;
-        this.enableLengthMax = enableLengthMax;
+        this.type = null;
+        this.parameters = new ArrayList<>();
     }
 
     public String getName() {
@@ -72,92 +29,24 @@ public class CadJoint {
         this.name = name;
     }
 
-    public Float getAngle() {
-        return angle;
+    public String getType() {
+        return type;
     }
 
-    public void setAngle(Float angle) {
-        this.angle = angle;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public Float getAngleMax() {
-        return angleMax;
+    public List<ConstrainedParameter> getParameters() {
+        return parameters;
     }
 
-    public void setAngleMax(Float angleMax) {
-        this.angleMax = angleMax;
+    public void setParameters(List<ConstrainedParameter> parameters) {
+        this.parameters = parameters;
     }
 
-    public Float getAngleMin() {
-        return angleMin;
-    }
-
-    public void setAngleMin(Float angleMin) {
-        this.angleMin = angleMin;
-    }
-
-    public Boolean getEnableAngleMin() {
-        return enableAngleMin;
-    }
-
-    public void setEnableAngleMin(Boolean enableAngleMin) {
-        this.enableAngleMin = enableAngleMin;
-    }
-
-    public Boolean getEnableAngleMax() {
-        return enableAngleMax;
-    }
-
-    public void setEnableAngleMax(Boolean enableAngleMax) {
-        this.enableAngleMax = enableAngleMax;
-    }
-
-    public Float getDistance() {
-        return distance;
-    }
-
-    public void setDistance(Float distance) {
-        this.distance = distance;
-    }
-
-    public Float getDistance2() {
-        return distance2;
-    }
-
-    public void setDistance2(Float distance2) {
-        this.distance2 = distance2;
-    }
-
-    public Float getLengthMin() {
-        return lengthMin;
-    }
-
-    public void setLengthMin(Float lengthMin) {
-        this.lengthMin = lengthMin;
-    }
-
-    public Float getLengthMax() {
-        return lengthMax;
-    }
-
-    public void setLengthMax(Float lengthMax) {
-        this.lengthMax = lengthMax;
-    }
-
-    public Boolean getEnableLengthMin() {
-        return enableLengthMin;
-    }
-
-    public void setEnableLengthMin(Boolean enableLengthMin) {
-        this.enableLengthMin = enableLengthMin;
-    }
-
-    public Boolean getEnableLengthMax() {
-        return enableLengthMax;
-    }
-
-    public void setEnableLengthMax(Boolean enableLengthMax) {
-        this.enableLengthMax = enableLengthMax;
+    public void addParameter(ConstrainedParameter parameter) {
+        parameters.add(parameter);
     }
 
     @Override 

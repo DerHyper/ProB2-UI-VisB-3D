@@ -1,4 +1,4 @@
-package de.prob2.ui.dataimport.nativecadimport;
+package de.prob2.ui.dataimport.nativecadimport.FreeCad;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -6,6 +6,9 @@ import java.util.function.Consumer;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import de.prob2.ui.dataimport.nativecadimport.CadJoint;
+import de.prob2.ui.dataimport.nativecadimport.ParseData;
 
 public class FreeCadHandler extends DefaultHandler {
     // Elements

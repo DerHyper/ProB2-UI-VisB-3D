@@ -1,13 +1,15 @@
 package de.prob2.ui.dataimport.nativecadimport.FreeCad;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import de.prob2.ui.dataimport.nativecadimport.CadJoint;
+import de.prob2.ui.dataimport.nativecadimport.ConstrainedParameter;
+import de.prob2.ui.dataimport.nativecadimport.ConstrainedParameter.BType;
 import de.prob2.ui.dataimport.nativecadimport.ParseData;
 
 public class FreeCadHandler extends DefaultHandler {
@@ -31,7 +33,7 @@ public class FreeCadHandler extends DefaultHandler {
     private static final String GROUP = "group";
     private static final String VALUE = "value";
 
-    // FCStd Joint variables
+    // FCStd Joint variables (raw XML property names)
     private static final String ANGLE = "Angle";
     private static final String ANGLEMAX = "AngleMax";
     private static final String ANGLEMIN = "AngleMin";
@@ -44,25 +46,17 @@ public class FreeCadHandler extends DefaultHandler {
     private static final String ENABLELENGTHMAX = "EnableLengthMax";
     private static final String ENABLELENGTHMIN = "EnableLengthMin";
 
+    // Base names of the resulting ConstrainedParameter instances
+    private static final String PARAM_ANGLE = "Angle";
+    private static final String PARAM_DISTANCE = "Distance";
+    private static final String PARAM_DISTANCE2 = "Distance2";
+
     // Local variables
     private ParseData parseData = new ParseData();
     private CadJoint currentJoint;
     private StringBuilder elementValue;
     private String currentProperty;
-
-    private final Map<String, Consumer<Object>> handlers = Map.ofEntries(
-        Map.entry(ANGLE,           value -> currentJoint.setAngle((Float) value)),
-        Map.entry(ANGLEMAX,        value -> currentJoint.setAngleMax((Float) value)),
-        Map.entry(ANGLEMIN,        value -> currentJoint.setAngleMin((Float) value)),
-        Map.entry(DISTANCE,        value -> currentJoint.setDistance((Float) value)),
-        Map.entry(DISTANCE2,       value -> currentJoint.setDistance2((Float) value)),
-        Map.entry(LENGTHMIN,       value -> currentJoint.setLengthMin((Float) value)),
-        Map.entry(LENGTHMAX,       value -> currentJoint.setLengthMax((Float) value)),
-        Map.entry(ENABLEANGLEMIN,  value -> currentJoint.setEnableAngleMin((Boolean) value)),
-        Map.entry(ENABLEANGLEMAX,  value -> currentJoint.setEnableAngleMax((Boolean) value)),
-        Map.entry(ENABLELENGTHMIN, value -> currentJoint.setEnableLengthMin((Boolean) value)),
-        Map.entry(ENABLELENGTHMAX, value -> currentJoint.setEnableLengthMax((Boolean) value))
-    );
+    private Map<String, ConstrainedParameter> parametersInProgress; // Parameters currently being built for the current Object
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
@@ -101,6 +95,7 @@ public class FreeCadHandler extends DefaultHandler {
         currentJoint = new CadJoint();
         String name = attr.getValue(NAME);
         currentJoint.setName(name);
+        parametersInProgress = new HashMap<>();
     }
 
     private void handleStartProperty(Attributes attr) {
@@ -108,21 +103,47 @@ public class FreeCadHandler extends DefaultHandler {
     }
 
     private void handleFloat(Attributes attr) {
-        dispatch(Float.valueOf(attr.getValue(VALUE)));
-    }
-
-    private void handleBool(Attributes attr) {
-        dispatch(Boolean.valueOf(attr.getValue(VALUE)));
-    }
-
-    private void dispatch(Object value) {
-        Consumer<Object> handler = handlers.get(currentProperty);
-        if (handler != null) {
-            handler.accept(value);
+        Float value = Float.valueOf(attr.getValue(VALUE));
+        switch (currentProperty) {
+            case ANGLE       -> getOrCreate(PARAM_ANGLE, BType.FLOAT).setCurrentValue(value);
+            case ANGLEMIN    -> getOrCreate(PARAM_ANGLE, BType.FLOAT).setMin(value);
+            case ANGLEMAX    -> getOrCreate(PARAM_ANGLE, BType.FLOAT).setMax(value);
+            case DISTANCE    -> getOrCreate(PARAM_DISTANCE, BType.FLOAT).setCurrentValue(value);
+            case LENGTHMIN   -> getOrCreate(PARAM_DISTANCE, BType.FLOAT).setMin(value);
+            case LENGTHMAX   -> getOrCreate(PARAM_DISTANCE, BType.FLOAT).setMax(value);
+            case DISTANCE2   -> getOrCreate(PARAM_DISTANCE2, BType.FLOAT).setCurrentValue(value);
+            default -> {}
         }
     }
 
+    private void handleBool(Attributes attr) {
+        Boolean value = Boolean.valueOf(attr.getValue(VALUE));
+        switch (currentProperty) {
+            case ENABLEANGLEMIN  -> getOrCreate(PARAM_ANGLE, BType.FLOAT).setEnableMin(value);
+            case ENABLEANGLEMAX  -> getOrCreate(PARAM_ANGLE, BType.FLOAT).setEnableMax(value);
+            case ENABLELENGTHMIN -> getOrCreate(PARAM_DISTANCE, BType.FLOAT).setEnableMin(value);
+            case ENABLELENGTHMAX -> getOrCreate(PARAM_DISTANCE, BType.FLOAT).setEnableMax(value);
+            default -> {}
+        }
+    }
+
+    /**
+     * Returns the parameter currently being built for paramName, or creates it 
+     * if it does not exist yet. The instance belongs to currentJoint (non-static inner class).
+     */
+    private ConstrainedParameter getOrCreate(String paramName, BType type) {
+        if (parametersInProgress.containsKey(paramName)){
+            return parametersInProgress.get(type);
+        } else {
+            return parametersInProgress.put(paramName, new ConstrainedParameter(paramName, type));
+        }
+
+    }
+
     private void handleEndObject() {
+        for (ConstrainedParameter parameter : parametersInProgress.values()) {
+            currentJoint.addParameter(parameter);
+        }
         parseData.addCadJoint(currentJoint);
     }
 

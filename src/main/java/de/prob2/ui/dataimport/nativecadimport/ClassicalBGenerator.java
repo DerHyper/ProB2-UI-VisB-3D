@@ -72,6 +72,7 @@ public class ClassicalBGenerator {
             || parameter.getEnableMax() == false);
         
         constructConstants(content, parameter, parameterPrefix);
+        constructVariables(content, parameter, parameterPrefix);
     }
 
     /** 
@@ -92,19 +93,11 @@ public class ClassicalBGenerator {
             content.concreteConstants.add(constantNameMax);
         }
     }
-        }
-
-        // max
-        if (parameter.getEnableMax() == null
-                || parameter.getMax() == null
-                || parameter.getEnableMax() == false) {
-            // do nothing
-        } else {
-            String constantName = parameterPrefix.toUpperCase() + SUFFIX_MAX;
-            content.concreteConstants.add(constantName);
-        }
-
-        
+    
+    private void constructVariables(
+            BMachineContent content,
+            ConstrainedParameter parameter,
+            String parameterPrefix) {
+        content.abstractVariables.add(variableNameCurrent);
     }
-
 }

@@ -11,8 +11,11 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
  */
 public class CadJoint {
 
+    /** Native name used by the cad modelling software e.g. "Revolute001" */
     private String name;
+    /** Native joint type used by the cad modelling software e.g. "Cylindrical", "Slider", "Fixed" in FreeCad */ 
     private String type;
+    /** Constraints that define the properties (allowed movements) of the joint */
     private List<ConstrainedParameter> parameters;
 
     public CadJoint() {
@@ -45,6 +48,9 @@ public class CadJoint {
         this.parameters = parameters;
     }
 
+    /**
+     * Adds a property to the joint.
+     */
     public void addParameter(ConstrainedParameter parameter) {
         parameters.add(parameter);
     }

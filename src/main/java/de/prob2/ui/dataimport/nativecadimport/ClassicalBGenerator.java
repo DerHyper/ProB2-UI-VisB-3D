@@ -73,6 +73,7 @@ public class ClassicalBGenerator {
         
         constructConstants(content, parameter, parameterPrefix);
         constructVariables(content, parameter, parameterPrefix);
+        constructProperties(content, parameter, parameterPrefix);
     }
 
     /** 
@@ -99,5 +100,68 @@ public class ClassicalBGenerator {
             ConstrainedParameter parameter,
             String parameterPrefix) {
         content.abstractVariables.add(variableNameCurrent);
+    }
+    
+    private void constructProperties(
+            BMachineContent content,
+            ConstrainedParameter parameter,
+            String parameterPrefix) {
+        constructTypeProperty(content, parameter, constantNameInitial);
+        constructValueProperty(content, parameter, constantNameInitial, parameter.getCurrentValue());
+
+        if (printMin) {
+            constructTypeProperty(content, parameter, constantNameMin);
+            constructValueProperty(content, parameter, constantNameMin, parameter.getMin());
+        }
+
+        if (printMax) {
+            constructTypeProperty(content, parameter, constantNameMax);
+            constructValueProperty(content, parameter, constantNameMax, parameter.getMax());
+        }
+    }
+
+    private void constructTypeProperty(BMachineContent content, ConstrainedParameter parameter, String constantName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(constantName);
+        sb.append(" : ");
+        switch (parameter.getType()) {
+            case FLOAT:
+                sb.append("FLOAT");
+                break;
+            case BOOL:
+                sb.append("BOOL");
+                break;
+            case INTEGER:
+                sb.append("INTEGER");
+                break;
+            default:
+                sb.append("UNKNOWN_TYPE"); // This should never happen
+                break;
+        }
+
+        content.properties.add(sb.toString());
+    }
+
+    
+    private void constructValueProperty(BMachineContent content, ConstrainedParameter parameter, String constantName, Object currentValue) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(constantName);
+        sb.append(" = ");
+        switch (parameter.getType()) {
+            case FLOAT:
+                sb.append(Float.toString((Float) currentValue));
+                break;
+            case BOOL:
+                sb.append(Boolean.toString((Boolean) currentValue));
+                break;
+            case INTEGER:
+                sb.append(Integer.toString((Integer) currentValue));
+                break;
+            default:
+                sb.append("UNKNOWN_TYPE"); // This should never happen
+                break;
+        }
+
+        content.properties.add(sb.toString());
     }
 }

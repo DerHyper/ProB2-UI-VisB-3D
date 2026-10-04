@@ -22,11 +22,19 @@ public class ClassicalBGenerator {
     private static final String SUFFIX_INITIAL = "_INITIAL";
     private static final String SUFFIX_MIN = "_MIN";
     private static final String SUFFIX_MAX = "_MAX";
+    private static final String SUFFIX_CURRENT = "_current";
+
+    private String constantNameInitial;
+    private String constantNameMin;
+    private String constantNameMax;
+    private String variableNameCurrent;
+    private boolean printMin;
+    private boolean printMax;
 
     /**
      * Parses the internal cad data into a classical B machine file string.
      */
-    public static String parseIntoBMachine(ParseData joints) throws IOException
+    public String parseIntoBMachine(ParseData joints) throws IOException
     {
         StringBuilder sb = new StringBuilder();
         BMachineContent content = new BMachineContent();
@@ -34,7 +42,6 @@ public class ClassicalBGenerator {
         for (CadJoint joint : joints.getCadJoints()) {
             for (ConstrainedParameter parameter : joint.getParameters()) {
                 constructContent(content, joint, parameter);
-
             }
         }
         return sb.toString();
@@ -46,12 +53,24 @@ public class ClassicalBGenerator {
      * @param joint
      * @param parameter
      */
-    private static void constructContent(
+    private void constructContent(
             BMachineContent content,
             CadJoint joint,
             ConstrainedParameter parameter) {
         String parameterPrefix = joint.getName() + "_" + parameter.getName();
-
+        constantNameInitial = parameterPrefix.toUpperCase() + SUFFIX_INITIAL;
+        constantNameMin = parameterPrefix.toUpperCase() + SUFFIX_MIN;
+        constantNameMax = parameterPrefix.toUpperCase() + SUFFIX_MAX;
+        variableNameCurrent = parameterPrefix + SUFFIX_CURRENT;
+        printMin = !(
+            parameter.getEnableMin() == null 
+            || parameter.getMin() == null 
+            || parameter.getEnableMin() == false);
+        printMax = !(
+            parameter.getEnableMax() == null
+            || parameter.getMax() == null
+            || parameter.getEnableMax() == false);
+        
         constructConstants(content, parameter, parameterPrefix);
     }
 
@@ -61,20 +80,18 @@ public class ClassicalBGenerator {
         but a static configuration values that never changes.
         TODO: Check if there is any case where these constants are needed.
         */
-    private static void constructConstants(BMachineContent content, ConstrainedParameter parameter,
+    private void constructConstants(BMachineContent content, ConstrainedParameter parameter,
             String parameterPrefix) {
-        // current value
-        String initialConstantName = parameterPrefix.toUpperCase() + SUFFIX_INITIAL;
-        content.concreteConstants.add(initialConstantName);
+        content.concreteConstants.add(constantNameInitial);
 
-        // min
-        if (parameter.getEnableMin() == null
-                || parameter.getMin() == null
-                || parameter.getEnableMin() == false) {
-            // do nothing
-        } else {
-            String constantName = parameterPrefix.toUpperCase() + SUFFIX_MIN;
-            content.concreteConstants.add(constantName);
+        if (printMin) {
+            content.concreteConstants.add(constantNameMin);
+        }
+
+        if (printMax) {
+            content.concreteConstants.add(constantNameMax);
+        }
+    }
         }
 
         // max

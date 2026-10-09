@@ -1,7 +1,10 @@
 package de.prob2.ui.dataimport.nativecadimport;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+
+import javafx.beans.binding.StringBinding;
 
 public class ClassicalBGenerator {
     /**
@@ -9,20 +12,27 @@ public class ClassicalBGenerator {
      * the parsed data in a format that is easier to then print into
      * the final b machine.
      */
-    private static class BMachineContent {
-        public List<String> concreteConstants;
-        public List<String> abstractVariables;
-        public List<String> properties;
-        public List<String> invariants;
-        public List<String> assertions;
-        public List<String> initialisations;
-        public List<String> operations;
+    private class BMachineContent {
+        public List<String> concreteConstants = new ArrayList<>();
+        public List<String> abstractVariables = new ArrayList<>();
+        public List<String> properties = new ArrayList<>();
+        public List<String> invariants = new ArrayList<>();
+        public List<String> assertions = new ArrayList<>();
+        public List<String> initialisations = new ArrayList<>();
+        public List<BMachineOperation> operations = new ArrayList<>();
+
+        public class BMachineOperation {
+            public String head;
+            public List<String> guards = new ArrayList<>();
+            public List<String> effect = new ArrayList<>();
+        }
     }
 
     private static final String SUFFIX_INITIAL = "_INITIAL";
     private static final String SUFFIX_MIN = "_MIN";
     private static final String SUFFIX_MAX = "_MAX";
     private static final String SUFFIX_CURRENT = "_current";
+    private static final String OPERATIONS_VAR_NAME = "value";
 
     private String currentConstantNameInitial;
     private String currentConstantNameMin;
@@ -36,19 +46,19 @@ public class ClassicalBGenerator {
      */
     public String parseIntoBMachine(ParseData joints) throws IOException
     {
-        StringBuilder sb = new StringBuilder();
         BMachineContent content = new BMachineContent();
-
         for (CadJoint joint : joints.getCadJoints()) {
             for (ConstrainedParameter parameter : joint.getParameters()) {
                 constructContent(content, joint, parameter);
             }
         }
-        return sb.toString();
+
+        return "";
     }
 
     /**
-     * Populates the BMachineContent with content that disc.
+     * Populates the BMachineContent with content that describes the individual lines inside of each 
+     * machine section, without any formatting.
      * @param content
      * @param joint
      * @param parameter
@@ -74,6 +84,10 @@ public class ClassicalBGenerator {
         constructConstants(content);
         constructVariables(content);
         constructProperties(content, parameter);
+        constructInvariants(content);
+        constructAssertions(content);
+        constructInitialisation(content);
+        constructOperations(content);
     }
 
     /** 
@@ -135,8 +149,8 @@ public class ClassicalBGenerator {
         content.properties.add(sb.toString());
     }
 
-    
-    private void constructValueProperty(BMachineContent content, ConstrainedParameter parameter, String constantName, Object currentValue) {
+    private void constructValueProperty(BMachineContent content, ConstrainedParameter parameter, String constantName,
+            Object currentValue) {
         StringBuilder sb = new StringBuilder();
         sb.append(constantName);
         sb.append(" = ");
@@ -148,5 +162,75 @@ public class ClassicalBGenerator {
         }
 
         content.properties.add(sb.toString());
+    }
+    
+    private void constructAssertions(BMachineContent content) {
+        // Currently no Assertions are created
+    }
+    
+    private void constructInvariants(BMachineContent content) {
+        if (printMin) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(currentVariableName);
+            sb.append(" >= ");
+            sb.append(currentConstantNameMin);
+            content.invariants.add(sb.toString());
+        }
+
+        if (printMax) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(currentVariableName);
+            sb.append(" <= ");
+            sb.append(currentConstantNameMax);
+            content.invariants.add(sb.toString());
+        }
+    }
+
+    private void constructInitialisation(BMachineContent content) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(currentVariableName);
+        sb.append(" := ");
+        sb.append(currentConstantNameInitial);
+        content.initialisations.add(sb.toString());
+    }
+    
+    private void constructOperations(BMachineContent content) {
+        BMachineContent.BMachineOperation operation = content.new BMachineOperation();
+
+        // Head
+        StringBuilder headBuilder = new StringBuilder();
+        headBuilder.append("set_");
+        headBuilder.append(currentVariableName);
+        headBuilder.append("(");
+        headBuilder.append(OPERATIONS_VAR_NAME);
+        headBuilder.append(")\n");
+        operation.head = headBuilder.toString();
+
+        // Guards
+        List<String> guards = new ArrayList<>();
+        if (printMin) {
+            StringBuilder selectRulesBuilder = new StringBuilder();
+            selectRulesBuilder.append(OPERATIONS_VAR_NAME);
+            selectRulesBuilder.append(" >= ");
+            selectRulesBuilder.append(currentConstantNameMin);
+            guards.add(selectRulesBuilder.toString());
+        }
+        if (printMax) {
+            StringBuilder selectRulesBuilder = new StringBuilder();
+            selectRulesBuilder.append(currentVariableName);
+            selectRulesBuilder.append(" <= ");
+            selectRulesBuilder.append(currentConstantNameMax);
+            guards.add(selectRulesBuilder.toString());
+        }
+        operation.guards = guards;
+
+        // Effects
+        StringBuilder effectBuilder = new StringBuilder();
+        effectBuilder.append(currentVariableName);
+        effectBuilder.append(" := ");
+        effectBuilder.append(OPERATIONS_VAR_NAME);
+        operation.effect.add(effectBuilder.toString());
+
+        content.operations.add(operation);
     }
 }

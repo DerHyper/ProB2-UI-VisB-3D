@@ -24,10 +24,10 @@ public class ClassicalBGenerator {
     private static final String SUFFIX_MAX = "_MAX";
     private static final String SUFFIX_CURRENT = "_current";
 
-    private String constantNameInitial;
-    private String constantNameMin;
-    private String constantNameMax;
-    private String variableNameCurrent;
+    private String currentConstantNameInitial;
+    private String currentConstantNameMin;
+    private String currentConstantNameMax;
+    private String currentVariableName;
     private boolean printMin;
     private boolean printMax;
 
@@ -58,10 +58,10 @@ public class ClassicalBGenerator {
             CadJoint joint,
             ConstrainedParameter parameter) {
         String parameterPrefix = joint.getName() + "_" + parameter.getName();
-        constantNameInitial = parameterPrefix.toUpperCase() + SUFFIX_INITIAL;
-        constantNameMin = parameterPrefix.toUpperCase() + SUFFIX_MIN;
-        constantNameMax = parameterPrefix.toUpperCase() + SUFFIX_MAX;
-        variableNameCurrent = parameterPrefix + SUFFIX_CURRENT;
+        currentConstantNameInitial = parameterPrefix.toUpperCase() + SUFFIX_INITIAL;
+        currentConstantNameMin = parameterPrefix.toUpperCase() + SUFFIX_MIN;
+        currentConstantNameMax = parameterPrefix.toUpperCase() + SUFFIX_MAX;
+        currentVariableName = parameterPrefix + SUFFIX_CURRENT;
         printMin = !(
             parameter.getEnableMin() == null 
             || parameter.getMin() == null 
@@ -71,52 +71,53 @@ public class ClassicalBGenerator {
             || parameter.getMax() == null
             || parameter.getEnableMax() == false);
         
-        constructConstants(content, parameter, parameterPrefix);
-        constructVariables(content, parameter, parameterPrefix);
-        constructProperties(content, parameter, parameterPrefix);
+        constructConstants(content);
+        constructVariables(content);
+        constructProperties(content, parameter);
     }
 
     /** 
-        EnableMin and enableMax vars are not included in the final machine, because 
-        they do not describe a changeable value that controls how a joint moves, 
-        but a static configuration values that never changes.
-        TODO: Check if there is any case where these constants are needed.
-        */
-    private void constructConstants(BMachineContent content, ConstrainedParameter parameter,
-            String parameterPrefix) {
-        content.concreteConstants.add(constantNameInitial);
+     * Populates the machines constants.
+    */
+    private void constructConstants(BMachineContent content) {
+        content.concreteConstants.add(currentConstantNameInitial);
 
+        // EnableMin and enableMax vars are not included in the final machine, because 
+        // they do not describe a changeable value that controls how a joint moves, 
+        // but a static configuration values that never changes.
+        // TODO: Check if there is any case where these constants are needed.
         if (printMin) {
-            content.concreteConstants.add(constantNameMin);
+            content.concreteConstants.add(currentConstantNameMin);
         }
 
         if (printMax) {
-            content.concreteConstants.add(constantNameMax);
+            content.concreteConstants.add(currentConstantNameMax);
         }
     }
     
-    private void constructVariables(
-            BMachineContent content,
-            ConstrainedParameter parameter,
-            String parameterPrefix) {
-        content.abstractVariables.add(variableNameCurrent);
+    /**
+     * Populates the machines variables.
+     * @param content
+     */
+    private void constructVariables(BMachineContent content) {
+        content.abstractVariables.add(currentVariableName);
     }
     
-    private void constructProperties(
-            BMachineContent content,
-            ConstrainedParameter parameter,
-            String parameterPrefix) {
-        constructTypeProperty(content, parameter, constantNameInitial);
-        constructValueProperty(content, parameter, constantNameInitial, parameter.getCurrentValue());
+    /**
+     * Populates the machines properties with a constants type and value
+     */
+    private void constructProperties(BMachineContent content, ConstrainedParameter parameter) {
+        constructTypeProperty(content, parameter, currentConstantNameInitial);
+        constructValueProperty(content, parameter, currentConstantNameInitial, parameter.getCurrentValue());
 
         if (printMin) {
-            constructTypeProperty(content, parameter, constantNameMin);
-            constructValueProperty(content, parameter, constantNameMin, parameter.getMin());
+            constructTypeProperty(content, parameter, currentConstantNameMin);
+            constructValueProperty(content, parameter, currentConstantNameMin, parameter.getMin());
         }
 
         if (printMax) {
-            constructTypeProperty(content, parameter, constantNameMax);
-            constructValueProperty(content, parameter, constantNameMax, parameter.getMax());
+            constructTypeProperty(content, parameter, currentConstantNameMax);
+            constructValueProperty(content, parameter, currentConstantNameMax, parameter.getMax());
         }
     }
 
@@ -125,18 +126,10 @@ public class ClassicalBGenerator {
         sb.append(constantName);
         sb.append(" : ");
         switch (parameter.getType()) {
-            case FLOAT:
-                sb.append("FLOAT");
-                break;
-            case BOOL:
-                sb.append("BOOL");
-                break;
-            case INTEGER:
-                sb.append("INTEGER");
-                break;
-            default:
-                sb.append("UNKNOWN_TYPE"); // This should never happen
-                break;
+            case FLOAT -> sb.append("FLOAT");
+            case BOOL -> sb.append("BOOL");
+            case INTEGER -> sb.append("INTEGER");
+            default -> sb.append("UNKNOWN_TYPE"); // This should never happen
         }
 
         content.properties.add(sb.toString());
@@ -148,18 +141,10 @@ public class ClassicalBGenerator {
         sb.append(constantName);
         sb.append(" = ");
         switch (parameter.getType()) {
-            case FLOAT:
-                sb.append(Float.toString((Float) currentValue));
-                break;
-            case BOOL:
-                sb.append(Boolean.toString((Boolean) currentValue));
-                break;
-            case INTEGER:
-                sb.append(Integer.toString((Integer) currentValue));
-                break;
-            default:
-                sb.append("UNKNOWN_TYPE"); // This should never happen
-                break;
+            case FLOAT -> sb.append(Float.toString((Float) currentValue));
+            case BOOL -> sb.append(Boolean.toString((Boolean) currentValue));
+            case INTEGER -> sb.append(Integer.toString((Integer) currentValue));
+            default -> sb.append("UNKNOWN_TYPE"); // This should never happen
         }
 
         content.properties.add(sb.toString());

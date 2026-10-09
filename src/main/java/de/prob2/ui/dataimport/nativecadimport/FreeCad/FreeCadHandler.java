@@ -132,12 +132,12 @@ public class FreeCadHandler extends DefaultHandler {
      * if it does not exist yet. The instance belongs to currentJoint (non-static inner class).
      */
     private ConstrainedParameter getOrCreate(String paramName, BType type) {
-        if (parametersInProgress.containsKey(paramName)){
-            return parametersInProgress.get(type);
-        } else {
-            return parametersInProgress.put(paramName, new ConstrainedParameter(paramName, type));
+        ConstrainedParameter parameter = parametersInProgress.get(paramName);
+        if (parameter == null) {
+            parameter = new ConstrainedParameter(paramName, type);
+            parametersInProgress.put(paramName, parameter);
         }
-
+        return parameter;
     }
 
     private void handleEndObject() {

@@ -12,6 +12,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.FilenameUtils;
 import org.xml.sax.SAXException;
 
 import de.prob2.ui.dataimport.nativecadimport.NativeCad2BParser;
@@ -41,7 +42,8 @@ public class FreeCad2BParser implements NativeCad2BParser {
         }
 
         ParseData parseData = freeCadHandler.getParseData();
-        parseData.setMachineName(cadFilePath.toFile().toString());
+        String machineName = FilenameUtils.removeExtension(cadFilePath.toFile().getName());
+        parseData.setMachineName(machineName);
         return parseData;
     }
     

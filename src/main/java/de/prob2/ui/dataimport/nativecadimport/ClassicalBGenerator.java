@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.prob2.ui.dataimport.nativecadimport.ConstrainedParameter.BType;
+
 public class ClassicalBGenerator {
     /**
      * Intermediate representation of a b machine that contains all
@@ -109,7 +111,7 @@ public class ClassicalBGenerator {
         constructConstants(content);
         constructVariables(content);
         constructProperties(content, parameter);
-        constructInvariants(content);
+        constructInvariants(content, parameter);
         constructAssertions(content);
         constructInitialisation(content);
         constructOperations(content);
@@ -164,14 +166,17 @@ public class ClassicalBGenerator {
         StringBuilder sb = new StringBuilder();
         sb.append(constantName);
         sb.append(" : ");
-        switch (parameter.getType()) {
-            case FLOAT -> sb.append("FLOAT");
-            case BOOL -> sb.append("BOOL");
-            case INTEGER -> sb.append("INTEGER");
-            default -> sb.append("UNKNOWN_TYPE"); // This should never happen
-        }
+        sb.append(bTypeName(parameter.getType()));
 
         content.properties.add(sb.toString());
+    }
+
+    private String bTypeName(BType type) {
+        return switch (type) {
+            case FLOAT -> "FLOAT";
+            case BOOL -> "BOOL";
+            case INTEGER -> "INTEGER";
+        };
     }
 
     private void constructValueProperty(BMachineContent content, ConstrainedParameter parameter, String constantName,
@@ -193,7 +198,13 @@ public class ClassicalBGenerator {
         // Currently no Assertions are created
     }
     
-    private void constructInvariants(BMachineContent content) {
+    private void constructInvariants(BMachineContent content, ConstrainedParameter parameter) {
+        StringBuilder typeSB = new StringBuilder();
+        typeSB.append(currentVariableName);
+        typeSB.append(" : ");
+        typeSB.append(bTypeName(parameter.getType()));
+        content.invariants.add(typeSB.toString());
+        
         if (printMin) {
             StringBuilder sb = new StringBuilder();
             sb.append(currentVariableName);
@@ -228,7 +239,7 @@ public class ClassicalBGenerator {
         headBuilder.append(currentVariableName);
         headBuilder.append("(");
         headBuilder.append(OPERATIONS_VAR_NAME);
-        headBuilder.append(")\n");
+        headBuilder.append(")");
         operation.head = headBuilder.toString();
 
         // Guards
@@ -242,7 +253,7 @@ public class ClassicalBGenerator {
         }
         if (printMax) {
             StringBuilder selectRulesBuilder = new StringBuilder();
-            selectRulesBuilder.append(currentVariableName);
+            selectRulesBuilder.append(OPERATIONS_VAR_NAME);
             selectRulesBuilder.append(" <= ");
             selectRulesBuilder.append(currentConstantNameMax);
             guards.add(selectRulesBuilder.toString());

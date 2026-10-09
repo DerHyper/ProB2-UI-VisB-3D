@@ -35,7 +35,7 @@ public class NativeCadParserFacade {
         }
 
         ParseData cadJointData = parser.parseFromFile(modelPath);
-        String bMachine = ClassicalBGenerator.parseIntoBMachine(cadJointData);
+        String bMachine = new ClassicalBGenerator().parseIntoBMachine(cadJointData);
 
         return bMachine;
     }

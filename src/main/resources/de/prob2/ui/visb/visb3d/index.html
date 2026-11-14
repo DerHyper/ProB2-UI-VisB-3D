@@ -8,7 +8,7 @@
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
 	<!-- <button onclick="sendToUnity()">Move</button> -->
     <canvas id="unity-canvas" width=960 height=600 tabindex="-1" style="width: 960px; height: 600px; background: #FAFAFA"></canvas>
-    <script src="Build/Builds.loader.js"></script>
+    <script src="Build/Build.loader.js"></script>
 	<script>
       let unityInstance = null;
 
@@ -35,9 +35,9 @@
         document.body.style.textAlign = "left";
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
-        dataUrl: "Build/Builds.data",
-        frameworkUrl: "Build/Builds.framework.js",
-        codeUrl: "Build/Builds.wasm",
+        dataUrl: "Build/Build.data",
+        frameworkUrl: "Build/Build.framework.js",
+        codeUrl: "Build/Build.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "VisB-3D",

@@ -39,6 +39,8 @@ import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
 import de.prob2.ui.simulation.interactive.UIInteractionHandler;
 import de.prob2.ui.simulation.simulators.RealTimeSimulator;
+import de.prob2.ui.visb.visb3d.cad.convert.CadConverterRegistry;
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionUtils;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -288,7 +290,8 @@ public final class VisBController {
 			if (!Files.isRegularFile(svgPath) || Files.size(svgPath) <= 0) {
 				throw new IOException("Given svg path is not a non-empty regular file: " + svgPath);
 			}
-			if (svgPathString.toLowerCase().endsWith(".glb")) {
+			String fileFormat = ConversionUtils.extractExtension(svgPath);
+			if (fileFormat.equals("glb") || new CadConverterRegistry().getSupportedFileExtensions().contains(fileFormat)) {
 				// GLB file specified, no SVG content to read
 				return new VisB3DVisualisation(svgPath, itemsCmd.getItems(), eventsCmd.getEvents(), svgObjectsCmd.getSvgObjects());
 			} else {

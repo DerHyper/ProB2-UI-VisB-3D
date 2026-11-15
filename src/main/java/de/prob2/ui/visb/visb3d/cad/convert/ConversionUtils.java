@@ -23,4 +23,13 @@ public final class ConversionUtils {
         int dotIndex = fileName.lastIndexOf('.');
         return dotIndex < 0 ? fileName : fileName.substring(0, dotIndex);
     }
+
+    /**
+     * @param fileName Name of file (e.g. "MyModel.stl")
+     * @return Name of file without extension (e.g. "MyModel")
+     */
+    public static String stripExtension(Path file) {
+        String name = file.getFileName().toString();
+        return stripExtension(name);
+    }
 }

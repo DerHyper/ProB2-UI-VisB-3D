@@ -18,8 +18,7 @@ final class StlMeshParser implements MeshParser {
 
 	/**
 	 * Reads a STL file and returns a {@link TriangleMeshData}. 
-	 * Currently no vertex welding, every vertex of a polygon is saved.
-	 * This needs more memory.
+	 * Every vertex of a polygon is saved separately.
 	 */
 	@Override
 	public TriangleMeshData parse(Path file) throws IOException {
@@ -31,10 +30,16 @@ final class StlMeshParser implements MeshParser {
 	}
 
 	/**
-	 * Checks if data matches binary STL format: <br>
-	 * - 80 byte header <br>
-	 * - 4 byte polygon counter <br>
-	 * - n * 50 byte polygon data (normal, v1, v2, v3).
+	 * Checks if data matches binary STL format:
+	 * - 80 byte header
+	 * - 04 byte polygon counter (UINT32 little-endian)
+	 * - n * 50 byte polygon data:
+	 * - - 12 byte normal
+	 * - - 12 byte v1
+	 * - - 12 byte v2
+	 * - - 12 byte v3
+	 * - - 02 byte attribute byte count (not used)
+	 * Source: https://en.wikipedia.org/wiki/STL_(file_format)
 	 */
 	private static boolean isBinaryStl(byte[] bytes) {
 		if (bytes.length < 84) {
@@ -47,18 +52,21 @@ final class StlMeshParser implements MeshParser {
 		}
 
 		// Fallback: Check if data does not start with "solid"
-		// This is not used before, because some binary STL headers might 
-		// start with "solid"
+		// This is not used before, because some binary STL headers might start with "solid"
 		String head = new String(bytes, 0, Math.min(5, bytes.length),
 			StandardCharsets.US_ASCII).trim().toLowerCase(Locale.ROOT);
 		return !head.equals("solid");
 	}
 
+	/**
+	 * Copies the 4 bytes from the little-endian byte array and arranges them in a big-endian format.
+	 * The code is written without variables for performance reasons.
+	 */
 	private static long readUInt32LE(byte[] bytes, int offset) {
-		return ((bytes[offset] & 0xFFL))
-			| ((bytes[offset + 1] & 0xFFL) << 8)
-			| ((bytes[offset + 2] & 0xFFL) << 16)
-			| ((bytes[offset + 3] & 0xFFL) << 24);
+		return (long) bytes[offset + 3] << 24
+         	 | (long) bytes[offset + 2] << 16
+         	 | (long) bytes[offset + 1] << 8
+         	 | (long) bytes[offset];
 	}
 
 	private static TriangleMeshData parseBinary(byte[] bytes) {
@@ -96,14 +104,28 @@ final class StlMeshParser implements MeshParser {
 		return new TriangleMeshData(positions, normals, indices);
 	}
 
+	/**
+	 * Parses an ASCII based STL file into TriangleMeshData.
+	 * Example of a ASCII STL file:
+	 * <pre>
+	 * facet normal ni nj nk
+	 *   outer loop
+	 *       vertex v1x v1y v1z
+	 *       vertex v2x v2y v2z
+	 *       vertex v3x v3y v3z
+	 *    endloop
+	 * endfacet
+	 * </pre> 
+	 * Source: https://en.wikipedia.org/wiki/STL_(file_format)
+	 */
 	private static TriangleMeshData parseAscii(byte[] bytes) {
 		String content = new String(bytes, StandardCharsets.US_ASCII);
 
 		List<Float> positionList = new ArrayList<>();
 		List<Float> normalList = new ArrayList<>();
-		float currentNx = 0f;
-		float currentNy = 0f;
-		float currentNz = 0f;
+		float currentNi = 0f;
+		float currentNj = 0f;
+		float currentNk = 0f;
 
 		for (String rawLine : content.split("\\r?\\n")) {
 			String line = rawLine.trim();
@@ -111,18 +133,18 @@ final class StlMeshParser implements MeshParser {
 				StringTokenizer tok = new StringTokenizer(line);
 				tok.nextToken(); // "facet"
 				tok.nextToken(); // "normal"
-				currentNx = Float.parseFloat(tok.nextToken());
-				currentNy = Float.parseFloat(tok.nextToken());
-				currentNz = Float.parseFloat(tok.nextToken());
+				currentNi = Float.parseFloat(tok.nextToken());
+				currentNj = Float.parseFloat(tok.nextToken());
+				currentNk = Float.parseFloat(tok.nextToken());
 			} else if (line.startsWith("vertex")) {
 				StringTokenizer tok = new StringTokenizer(line);
 				tok.nextToken(); // "vertex"
 				positionList.add(Float.valueOf(tok.nextToken()));
 				positionList.add(Float.valueOf(tok.nextToken()));
 				positionList.add(Float.valueOf(tok.nextToken()));
-				normalList.add(currentNx);
-				normalList.add(currentNy);
-				normalList.add(currentNz);
+				normalList.add(currentNi);
+				normalList.add(currentNj);
+				normalList.add(currentNk);
 			}
 		}
 

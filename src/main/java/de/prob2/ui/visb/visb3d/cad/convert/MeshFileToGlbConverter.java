@@ -43,7 +43,7 @@ public final class MeshFileToGlbConverter implements CadToGlbConverter {
 		MeshParser parser = parsersByExtension.get(extension);
 		if (parser == null) {
 			throw new IllegalArgumentException(
-					"Kein MeshParser fuer ." + extension + " registriert");
+					"No MeshParser registered for ." + extension + " files");
 		}
 
 		TriangleMeshData mesh = parser.parse(inputFile);

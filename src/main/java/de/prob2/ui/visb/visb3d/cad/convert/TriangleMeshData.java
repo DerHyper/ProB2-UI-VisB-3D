@@ -7,6 +7,8 @@ package de.prob2.ui.visb.visb3d.cad.convert;
  * The real glTF/GLB export happens in the ({@link GlbBuilder}).
  */
 public final class TriangleMeshData {
+	/** Name that will be used for the glTF node. */
+	private final String name;
 
 	/** Interleaved xyz-positions, Length = 3 * #vertices. */
 	private final float[] positions;
@@ -17,22 +19,27 @@ public final class TriangleMeshData {
 	/** Polygon-indices in vertices, Length = 3 * #polygons. */
 	private final int[] indices;
 
-	public TriangleMeshData(float[] positions, float[] normals, int[] indices) {
+	public TriangleMeshData(String name, float[] positions, float[] normals, int[] indices) {
 		if (positions.length != normals.length) {
 			throw new IllegalArgumentException(
-				"positions and normals must have same length");
+					"positions and normals must have same length");
 		}
 		if (positions.length % 3 != 0) {
 			throw new IllegalArgumentException(
-				"positions.length has to be dividable by 3 (one per polygon vertex)");
+					"positions.length has to be dividable by 3 (one per polygon vertex)");
 		}
 		if (indices.length % 3 != 0) {
 			throw new IllegalArgumentException(
-				"indices.length has to be dividable by 3");
+					"indices.length has to be dividable by 3");
 		}
+		this.name = name;
 		this.positions = positions;
 		this.normals = normals;
 		this.indices = indices;
+	}
+	
+	public String getName() {
+		return name;
 	}
 
 	public float[] getPositions() {

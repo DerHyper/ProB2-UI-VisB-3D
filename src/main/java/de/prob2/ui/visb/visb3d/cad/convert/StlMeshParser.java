@@ -23,10 +23,11 @@ final class StlMeshParser implements MeshParser {
 	@Override
 	public TriangleMeshData parse(Path file) throws IOException {
 		byte[] bytes = Files.readAllBytes(file);
+		String name = ConversionUtils.stripExtension(file);
 		if (isBinaryStl(bytes)) {
-			return parseBinary(bytes);
+			return parseBinary(name, bytes);
 		}
-		return parseAscii(bytes);
+		return parseAscii(name, bytes);
 	}
 
 	/**
@@ -69,7 +70,7 @@ final class StlMeshParser implements MeshParser {
          	 | (long) bytes[offset];
 	}
 
-	private static TriangleMeshData parseBinary(byte[] bytes) {
+	private static TriangleMeshData parseBinary(String name, byte[] bytes) {
 		ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
 		buffer.position(80);
 		int triangleCount = buffer.getInt();
@@ -101,7 +102,7 @@ final class StlMeshParser implements MeshParser {
 			}
 			buffer.getShort(); // attribute byte count is ignored
 		}
-		return new TriangleMeshData(positions, normals, indices);
+		return new TriangleMeshData(name, positions, normals, indices);
 	}
 
 	/**
@@ -118,7 +119,7 @@ final class StlMeshParser implements MeshParser {
 	 * </pre> 
 	 * Source: https://en.wikipedia.org/wiki/STL_(file_format)
 	 */
-	private static TriangleMeshData parseAscii(byte[] bytes) {
+	private static TriangleMeshData parseAscii(String name, byte[] bytes) {
 		String content = new String(bytes, StandardCharsets.US_ASCII);
 
 		List<Float> positionList = new ArrayList<>();
@@ -155,7 +156,7 @@ final class StlMeshParser implements MeshParser {
 		for (int i = 0; i < vertexCount; i++) {
 			indices[i] = i;
 		}
-		return new TriangleMeshData(positions, normals, indices);
+		return new TriangleMeshData(name, positions, normals, indices);
 	}
 
 	private static float[] toFloatArray(List<Float> list) {

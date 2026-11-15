@@ -2,6 +2,8 @@ package de.prob2.ui.visb.visb3d.cad.convert;
 
 import de.javagl.jgltf.model.GltfConstants;
 import de.javagl.jgltf.model.GltfModel;
+import de.javagl.jgltf.model.NodeModel;
+import de.javagl.jgltf.model.impl.DefaultNodeModel;
 import de.javagl.jgltf.model.io.GltfModelWriter;
 import de.javagl.jgltf.obj.model.ObjGltfModelCreator;
 import de.javagl.obj.FloatTuples;
@@ -31,6 +33,7 @@ final class GlbBuilder {
 		try {
 			writeAsObj(mesh, tempObjFile);
 			GltfModel gltfModel = createGltfModel(tempObjFile.toUri());
+			renameNodes(gltfModel, mesh.getName());
 			new GltfModelWriter().writeBinary(gltfModel, outputGlbFile.toFile());
 		} finally {
 			Files.deleteIfExists(tempObjFile);
@@ -46,6 +49,14 @@ final class GlbBuilder {
 		// tesselation on geometry based CAD formats
 		creator.setIndicesComponentType(GltfConstants.GL_UNSIGNED_INT);
 		return creator.create(objFileUri);
+	}
+
+	private static void renameNodes(GltfModel model, String name) {
+		for (NodeModel node : model.getNodeModels()) {
+			if (node instanceof DefaultNodeModel defNode) {
+				defNode.setName(name); // Should only be called once since there is only one node
+			}
+		}
 	}
 
 	private static void writeAsObj(TriangleMeshData mesh, Path outputObjFile)

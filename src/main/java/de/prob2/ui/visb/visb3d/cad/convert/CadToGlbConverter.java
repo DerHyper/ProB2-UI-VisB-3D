@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import de.prob2.ui.visb.visb3d.cad.convert.mesh.MeshFileToGlbConverter;
+
 /**
  * A interface for all converters that transform files into .glb files.
  * <p>

@@ -1,4 +1,4 @@
-package de.prob2.ui.visb.visb3d.cad.convert;
+package de.prob2.ui.visb.visb3d.cad.convert.mesh;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import de.prob2.ui.visb.visb3d.cad.convert.CadToGlbConverter;
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionUtils;
+import de.prob2.ui.visb.visb3d.cad.convert.GlbBuilder;
 
 /**
  * A {@link CadToGlbConverter} for all mesh based file formats (e.g. STL, OBJ, ...).

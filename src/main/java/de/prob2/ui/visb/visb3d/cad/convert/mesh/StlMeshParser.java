@@ -1,4 +1,4 @@
-package de.prob2.ui.visb.visb3d.cad.convert;
+package de.prob2.ui.visb.visb3d.cad.convert.mesh;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
+
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionUtils;
 
 /**
  * Reads a STL file and returns a {@link TriangleMeshData}.

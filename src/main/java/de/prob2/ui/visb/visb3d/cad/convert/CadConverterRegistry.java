@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import de.prob2.ui.visb.visb3d.cad.convert.mesh.MeshFileToGlbConverter;
+
 /**
  * Central entry point for CAD file conversion. 
  * <br>

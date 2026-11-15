@@ -1,4 +1,4 @@
-package de.prob2.ui.visb.visb3d.cad.convert;
+package de.prob2.ui.visb.visb3d.cad.convert.mesh;
 
 import java.io.IOException;
 import java.nio.file.Path;

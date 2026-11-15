@@ -1,4 +1,6 @@
-package de.prob2.ui.visb.visb3d.cad.convert;
+package de.prob2.ui.visb.visb3d.cad.convert.mesh;
+
+import de.prob2.ui.visb.visb3d.cad.convert.GlbBuilder;
 
 /**
  * Data format independent Representation of polygon meshes.

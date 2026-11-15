@@ -11,6 +11,7 @@ import de.javagl.obj.Obj;
 import de.javagl.obj.ObjFaces;
 import de.javagl.obj.ObjWriter;
 import de.javagl.obj.Objs;
+import de.prob2.ui.visb.visb3d.cad.convert.mesh.TriangleMeshData;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,9 +27,16 @@ import java.nio.file.Path;
  * 
  * This has to be done this way because direct glb conversion is not jet supported in jgltf.
  */
-final class GlbBuilder {
+public final class GlbBuilder {
 
-	static void writeGlb(TriangleMeshData mesh, Path outputGlbFile) throws IOException {
+	/**
+	 * Creates a glTF model of the {@link TriangleMeshData} and saves it into the file 
+	 * located at the given {@link Path} parameter.
+	 * @param mesh Data that will be saved in a glTF file.
+	 * @param outputGlbFile GlTF file that is overwritten.
+	 * @throws IOException Because IO issues that can occur when writing in a file.
+	 */
+	public static void writeGlb(TriangleMeshData mesh, Path outputGlbFile) throws IOException {
 		Path tempObjFile = Files.createTempFile("cadconvert", ".obj");
 		try {
 			writeAsObj(mesh, tempObjFile);
@@ -43,7 +51,7 @@ final class GlbBuilder {
 	/**
 	 * Creates a {@link GltfModel} from a .obj file.
 	 */
-	static GltfModel createGltfModel(URI objFileUri) throws IOException {
+	private static GltfModel createGltfModel(URI objFileUri) throws IOException {
 		ObjGltfModelCreator creator = new ObjGltfModelCreator();
 		// GL_UNSIGNED_INT because very big models may occur due use of 
 		// tesselation on geometry based CAD formats

@@ -58,6 +58,7 @@ import de.prob2.ui.internal.executor.FxThreadExecutor;
 import de.prob2.ui.menu.ExternalEditor;
 import de.prob2.ui.prob2fx.CurrentProject;
 import de.prob2.ui.prob2fx.CurrentTrace;
+import de.prob2.ui.visb.visb3d.InitMessageDto;
 import de.prob2.ui.visb.visb3d.VisB3DDto;
 import de.prob2.ui.visb.visb3d.VisB3DMessageHandler;
 import de.prob2.ui.visb.visb3d.cad.convert.CadConverterRegistry;
@@ -824,10 +825,22 @@ public final class VisBView extends BorderPane {
 		VisBWebSocketServer.startServerThread(messageHandler);
 		VisBHttpServer.startHTTPServer();
 
-		Path glbPath = convertVisBVisualisationToGlb();
+		Path visFile = visBController.getVisBVisualisation().getSvgPath();
+		Path glbPath = convert3dFileToGlb(visFile);
+		Path[] modelPaths = convertVisBModelsToGlb();
 
 		VisBHttpServer.sendGlbData(glbPath);
-		VisBWebSocketServer.setInitMessage(VisBHttpServer.getGlbDataUri());
+		VisBHttpServer.sendModelsData(modelPaths);
+		InitMessageDto messageDto = new InitMessageDto(VisBHttpServer.getGlbDataUri(),
+				VisBHttpServer.getModelsDataUris());
+		String message;
+		try {
+			message = this.objectMapper.writeValueAsString(messageDto);
+		} catch (JsonProcessingException e) {
+			alert(e, "visb.controller.alert.eval.formulas.header", "visb.exception.visb.file.error.header");
+			message = e.getMessage();
+		}
+		VisBWebSocketServer.setInitMessage(message);
 
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
 			try {
@@ -839,12 +852,10 @@ public final class VisBView extends BorderPane {
 		}
 	}
 	
-	private Path convertVisBVisualisationToGlb()
+	private Path convert3dFileToGlb(Path file)
 	{
-		Path originalFile = visBController.getVisBVisualisation().getSvgPath();
-		if (ConversionUtils.extractExtension(originalFile).equals("glb"))
-		{
-			return originalFile;
+		if (ConversionUtils.extractExtension(file).equals("glb")) {
+			return file;
 		}
 
 		Path outputDir = null;
@@ -856,12 +867,30 @@ public final class VisBView extends BorderPane {
 
 		Path glbPath = null;
 		try {
-			glbPath = new CadConverterRegistry().convert(originalFile, outputDir);
+			glbPath = new CadConverterRegistry().convert(file, outputDir);
 		} catch (IOException e) {
-			LOGGER.error("Error while converting" + originalFile.getFileName().toString() + "to GLB file format", e);
+			LOGGER.error("Error while converting" + file.getFileName().toString() + "to GLB file format", e);
+		}
+
+		return glbPath;
+	}
+	
+	private Path[] convertVisBModelsToGlb()
+	{
+		if (!(visBController.getVisBVisualisation() instanceof VisB3DVisualisation)) {
+			LOGGER.warn("Could not read VisB-3D glue file model attribute.");
+			return null;
+		}
+
+		VisB3DVisualisation visB3DVisualisation = (VisB3DVisualisation) visBController.getVisBVisualisation();
+		Path[] models = visB3DVisualisation.getModels();
+		Path[] glbPaths = new Path[models.length];
+		
+		for (int i = 0; i < models.length; i++) {
+			glbPaths[i] = convert3dFileToGlb(models[i]);
 		}
 		
-		return glbPath;
+		return glbPaths;
 	}
 
 	@FXML

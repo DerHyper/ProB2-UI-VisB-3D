@@ -5,6 +5,10 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +30,8 @@ public class VisBHttpServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(VisBWebSocketServer.class);
     private static byte[] glbData = null;
     private static String glbFileName = null;
+    /** Maps the Name of the File to the glb data contained in the file.*/
+    private static Map<String, byte[]> modelFiles;
 
     /**
      * Creates a local server
@@ -73,6 +79,45 @@ public class VisBHttpServer {
     }
 
     /**
+     * Caches GLB files to be served by the HTTP server
+     * @param models the paths to the GLB files
+     */
+    public static void sendModelsData(Path[] models) {
+        modelFiles = new HashMap<>();
+        
+        for (int i = 0; i < models.length; i++) {
+            try {
+                modelFiles.put(models[i].getFileName().toString(), Files.readAllBytes(models[i]));
+            } catch (IOException e) {
+                LOGGER.error("VisBHttpServer: An error occurred while uploading {}: {}",
+                        models[i] != null ? models[i] : "Unknown", e);
+            }
+        }
+    }
+
+    /**
+     * Gets the data URI for all the models cached GLB files
+     */
+    public static List<String> getModelsDataUris()
+    {
+        if (modelFiles == null || modelFiles.size() == 0) {
+            return null;
+        }
+
+        List<String> uris = new ArrayList<>();
+
+        for (String fileName : modelFiles.keySet()) {
+            if (fileName == null) {
+                continue;
+            }
+
+            uris.add("http://localhost:" + PORT + "/" + fileName);
+        }
+
+        return uris;
+    }
+
+    /**
      * Handle GET requests for index and static files
      */
     static class IndexHandler implements HttpHandler {
@@ -90,6 +135,7 @@ public class VisBHttpServer {
 
             // Determine requested path
             String path = exchange.getRequestURI().getPath();
+            String pathFile = path.substring(1);
             if (path.equals("/")) {
                 path = "/index.html";
 
@@ -97,6 +143,12 @@ public class VisBHttpServer {
                 exchange.getResponseHeaders().add("Content-Type", "model/gltf-binary");
                 exchange.sendResponseHeaders(200, glbData.length);
                 exchange.getResponseBody().write(glbData);
+                exchange.close();
+                return;
+            } else if (modelFiles.containsKey(pathFile) && modelFiles.get(pathFile) != null) {
+                exchange.getResponseHeaders().add("Content-Type", "model/gltf-binary");
+                exchange.sendResponseHeaders(200, modelFiles.get(pathFile).length);
+                exchange.getResponseBody().write(modelFiles.get(pathFile));
                 exchange.close();
                 return;
             }

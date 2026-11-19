@@ -11,8 +11,15 @@ import de.prob.animator.domainobjects.VisBSVGObject;
  * The VisB3DVisualisation Object is a subclass of VisBVisualisation specifically for 3D visualizations using GLB files.
  */
 public class VisB3DVisualisation extends VisBVisualisation {
-    public VisB3DVisualisation(Path svgPath, List<VisBItem> items, List<VisBEvent> events,
+    private final Path[] models;
+
+    public VisB3DVisualisation(Path svgPath, Path[] models, List<VisBItem> items, List<VisBEvent> events,
             List<VisBSVGObject> svgObjects) {
         super(svgPath, "", items, events, svgObjects);
+        this.models = models;
+    }
+
+    public Path[] getModels() {
+        return models;
     }
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -12,6 +13,8 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.MoreFiles;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -59,6 +62,13 @@ public final class VisBController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(VisBController.class);
 
 	public static final Path NO_PATH = Paths.get("");
+
+	/**
+	 * Optional key in a VisB glue file that lists additional 3D files, e.g. <code>"models": ["Stem.stl", "Complex.stl"]</code>.
+	 * ProB ignores this key, it is only read on the Java side.
+	 */
+	private static final String MODELS_KEY = "models";
+	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
 	private final CurrentProject currentProject;
 	private final CurrentTrace currentTrace;
@@ -238,6 +248,53 @@ public final class VisBController {
 	}
 
 	/**
+	 * Reads the optional {@link #MODELS_KEY} array from a VisB .json file.
+	 * @return the listed paths (as written in the file), or an empty list if there is no such entry
+	 */
+	private static List<String> readModelNames(Path visBPath) throws IOException {
+		JsonNode models = JSON_MAPPER.readTree(visBPath.toFile()).get(MODELS_KEY);
+		if (models == null) {
+			return new ArrayList<>();
+		}
+		if (!models.isArray()) {
+			throw new IOException("\"" + MODELS_KEY + "\" must be an array of file paths in " + visBPath);
+		}
+		List<String> result = new ArrayList<>();
+		for (JsonNode entry : models) {
+			if (!entry.isTextual() || entry.asText().isBlank()) {
+				throw new IOException(
+						"Every entry of \"" + MODELS_KEY + "\" must be a non-empty string in " + visBPath);
+			}
+			result.add(entry.asText().strip());
+		}
+		return result;
+	}
+	
+	/**
+	 * Resolves a path from the model entry of a VisB file (relative to the VisB file) 
+	 * and checks that it is a non-empty regular file.
+	 */
+	private static Path modelNameToPath(Path visBPath, String modelName) throws IOException {
+		Path path = Paths.get(visBPath.getParent().toString(), modelName);
+		if (!Files.isRegularFile(path) || Files.size(path) <= 0) {
+			throw new IOException("Given visualisation path is not a non-empty regular file: " + path);
+		}
+		return path;
+	}
+
+	/**
+	 * Reads the names from the model entry in the VisB glue file and resolves the paths. 
+	 */
+	private static Path[] readModelPaths(Path visBPath) throws IOException {
+		List<String> modelNames = readModelNames(visBPath);
+		Path[] paths = new Path[modelNames.size()];
+		for (int i = 0; i < paths.length; i++) {
+			paths[i] = modelNameToPath(visBPath, modelNames.get(i));
+		}
+		return paths;
+	}
+
+	/**
 	 * This method takes a VisB file as input and returns a {@link VisBVisualisation} object.
 	 * @param stateSpace the ProB animator instance using which to load the VisB file
 	 * @param visBPath path to the .json or .def file for the VisB visualisation
@@ -293,7 +350,8 @@ public final class VisBController {
 			String fileFormat = ConversionUtils.extractExtension(svgPath);
 			if (fileFormat.equals("glb") || new CadConverterRegistry().getSupportedFileExtensions().contains(fileFormat)) {
 				// GLB file specified, no SVG content to read
-				return new VisB3DVisualisation(svgPath, itemsCmd.getItems(), eventsCmd.getEvents(), svgObjectsCmd.getSvgObjects());
+				Path[] models = readModelPaths(visBPath);
+				return new VisB3DVisualisation(svgPath, models, itemsCmd.getItems(), eventsCmd.getEvents(), svgObjectsCmd.getSvgObjects());
 			} else {
 				svgContent = Files.readString(svgPath);
 			}

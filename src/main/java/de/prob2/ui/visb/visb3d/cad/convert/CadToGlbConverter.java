@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionResult.FileHierarchyPersistenceLevel;
 import de.prob2.ui.visb.visb3d.cad.convert.mesh.MeshFileToGlbConverter;
 
 /**
@@ -34,4 +35,9 @@ public interface CadToGlbConverter {
     * @return List of file extensions that can be converted by the converter
     */
     List<String> supportedFileExtensions();
+
+    /**
+     * @return The level of hierarchy persistence
+     */
+    FileHierarchyPersistenceLevel hierarchyPersistence(Path inputFile);
 }

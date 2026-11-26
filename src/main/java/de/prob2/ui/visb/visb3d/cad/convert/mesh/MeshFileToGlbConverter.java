@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.prob2.ui.visb.visb3d.cad.convert.CadToGlbConverter;
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionResult.FileHierarchyPersistenceLevel;
 import de.prob2.ui.visb.visb3d.cad.convert.ConversionUtils;
 import de.prob2.ui.visb.visb3d.cad.convert.GlbBuilder;
 
@@ -61,5 +62,18 @@ public final class MeshFileToGlbConverter implements CadToGlbConverter {
 	@Override
 	public List<String> supportedFileExtensions() {
 		return new ArrayList<>(parsersByExtension.keySet());
+	}
+
+	@Override
+	public FileHierarchyPersistenceLevel hierarchyPersistence(Path inputFile) {
+		String extension = ConversionUtils.extractExtension(inputFile);
+		switch (extension) {
+			case "stl":
+				return FileHierarchyPersistenceLevel.NONE;
+			case "obj":
+				return FileHierarchyPersistenceLevel.SOME;
+			default:
+				throw new IllegalArgumentException("No MeshParser registered for ." + extension + " files");
+		}
 	}
 }

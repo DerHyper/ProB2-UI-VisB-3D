@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -62,7 +64,9 @@ import de.prob2.ui.visb.visb3d.InitMessageDto;
 import de.prob2.ui.visb.visb3d.VisB3DDto;
 import de.prob2.ui.visb.visb3d.VisB3DMessageHandler;
 import de.prob2.ui.visb.visb3d.cad.convert.CadConverterRegistry;
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionResult;
 import de.prob2.ui.visb.visb3d.cad.convert.ConversionUtils;
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionResult.FileHierarchyPersistenceLevel;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -82,6 +86,7 @@ import javafx.fxml.FXML;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
@@ -826,10 +831,11 @@ public final class VisBView extends BorderPane {
 		VisBHttpServer.startHTTPServer();
 
 		Path visFile = visBController.getVisBVisualisation().getSvgPath();
-		Path glbPath = convert3dFileToGlb(visFile);
-		Path[] modelPaths = convertVisBModelsToGlb();
-
-		VisBHttpServer.sendGlbData(glbPath);
+		ConversionResult mainConversion = convert3dFileToGlb(visFile);
+		List<ConversionResult> modelConversions = convertVisBModelsToGlb();
+		alertIfConversionLossOccurred(mainConversion, modelConversions);
+		VisBHttpServer.sendGlbData(mainConversion.outputPath);
+		Path[] modelPaths = modelConversions.stream().map(m -> m.outputPath).toArray(size -> new Path[size]);
 		VisBHttpServer.sendModelsData(modelPaths);
 		InitMessageDto messageDto = new InitMessageDto(VisBHttpServer.getGlbDataUri(),
 				VisBHttpServer.getModelsDataUris());
@@ -851,11 +857,25 @@ public final class VisBView extends BorderPane {
 			}
 		}
 	}
+
+	private void alertIfConversionLossOccurred(ConversionResult mainConversion, List<ConversionResult> modelConversions)
+	{
+		if (modelConversions.size() > 0) {
+			return; // Only send alter if a single model is imported that looses hierarchy info 
+		}
+		
+		if (mainConversion.persistenceLevel != FileHierarchyPersistenceLevel.ALL)
+		{
+			String warningText = i18n.translate(mainConversion.persistenceLevel.warning);
+			Alert alert = new Alert(Alert.AlertType.WARNING, warningText, ButtonType.OK);
+			alert.showAndWait();
+		}
+	}
 	
-	private Path convert3dFileToGlb(Path file)
+	private ConversionResult convert3dFileToGlb(Path file)
 	{
 		if (ConversionUtils.extractExtension(file).equals("glb")) {
-			return file;
+			return new ConversionResult(file, FileHierarchyPersistenceLevel.ALL);
 		}
 
 		Path outputDir = null;
@@ -865,17 +885,18 @@ public final class VisBView extends BorderPane {
 			LOGGER.error("Error while creating TempDirectory", e);
 		}
 
-		Path glbPath = null;
+		
+		ConversionResult conversionResult = new ConversionResult(null, null);
 		try {
-			glbPath = new CadConverterRegistry().convert(file, outputDir);
+			conversionResult = new CadConverterRegistry().convert(file, outputDir);
 		} catch (IOException e) {
 			LOGGER.error("Error while converting" + file.getFileName().toString() + "to GLB file format", e);
 		}
 
-		return glbPath;
+		return conversionResult;
 	}
 	
-	private Path[] convertVisBModelsToGlb()
+	private List<ConversionResult> convertVisBModelsToGlb()
 	{
 		if (!(visBController.getVisBVisualisation() instanceof VisB3DVisualisation)) {
 			LOGGER.warn("Could not read VisB-3D glue file model attribute.");
@@ -884,13 +905,13 @@ public final class VisBView extends BorderPane {
 
 		VisB3DVisualisation visB3DVisualisation = (VisB3DVisualisation) visBController.getVisBVisualisation();
 		Path[] models = visB3DVisualisation.getModels();
-		Path[] glbPaths = new Path[models.length];
+		List<ConversionResult> result = new ArrayList<>();
 		
 		for (int i = 0; i < models.length; i++) {
-			glbPaths[i] = convert3dFileToGlb(models[i]);
+			result.add(convert3dFileToGlb(models[i]));
 		}
 		
-		return glbPaths;
+		return result;
 	}
 
 	@FXML

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import de.prob2.ui.visb.visb3d.cad.convert.ConversionResult.FileHierarchyPersistenceLevel;
 import de.prob2.ui.visb.visb3d.cad.convert.mesh.MeshFileToGlbConverter;
 
 /**
@@ -15,7 +16,6 @@ import de.prob2.ui.visb.visb3d.cad.convert.mesh.MeshFileToGlbConverter;
  * into the constructor. To add new mesh based file formats see {@link MeshFileToGlbConverter}.
  */
 public final class CadConverterRegistry {
- 
 	/**
 	 * Collection of all the CAD file formats that can currently be converted to .glb
 	 */
@@ -36,12 +36,14 @@ public final class CadConverterRegistry {
 	 * @return Path to the exported .glb file.
 	 * @throws UnsupportedOperationException When no converter is registered for the file extension
 	 */
-	public Path convert(Path inputFile, Path outputDirectory) throws IOException {
+	public ConversionResult convert(Path inputFile, Path outputDirectory) throws IOException {
 		String extension = extractExtension(inputFile);
 
 		for (CadToGlbConverter converter : converters) {
 			if (converter.supports(extension)) {
-				return converter.convert(inputFile, outputDirectory);
+				FileHierarchyPersistenceLevel persistence = converter.hierarchyPersistence(inputFile);
+				Path outpuPath = converter.convert(inputFile, outputDirectory);
+				return new ConversionResult(outpuPath, persistence);
 			}
 		}
 		throw new UnsupportedOperationException(
